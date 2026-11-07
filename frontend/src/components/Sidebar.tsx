@@ -1,0 +1,67 @@
+import React from 'react';
+import { NavLink } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import {
+  Home,
+  CheckSquare,
+  Info,
+  Award,
+  BarChart3,
+  TrendingUp,
+  User,
+  LogOut,
+} from 'lucide-react';
+
+export const Sidebar: React.FC = () => {
+  const { logout } = useAuth();
+
+  const navItems = [
+    { name: 'Home', path: '/dashboard', icon: Home },
+    { name: 'Tasks', path: '/tasks', icon: CheckSquare },
+    { name: 'About & Rewards', path: '/about', icon: Info },
+    { name: 'My Score', path: '/my-points', icon: Award },
+    { name: 'Leaderboard', path: '/leaderboard', icon: BarChart3 },
+    { name: 'My Sales', path: '/my-sales', icon: TrendingUp },
+    { name: 'Profile', path: '/profile', icon: User },
+  ];
+
+  return (
+    <aside className="w-full lg:w-60 flex-shrink-0">
+      <div className="bg-white rounded-3xl p-3 border border-slate-200/80 shadow-sm sticky top-20 flex flex-col justify-between min-h-[500px]">
+        {/* Navigation Links */}
+        <nav className="space-y-1.5">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                className={({ isActive }) =>
+                  `flex items-center gap-3.5 px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
+                    isActive
+                      ? 'bg-blue-50 text-blue-600 font-bold shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  }`
+                }
+              >
+                <Icon className="w-4 h-4 flex-shrink-0" />
+                <span>{item.name}</span>
+              </NavLink>
+            );
+          })}
+        </nav>
+
+        {/* Bottom: Logout */}
+        <div className="pt-4 mt-6 border-t border-slate-100">
+          <button
+            onClick={logout}
+            className="w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl text-sm font-semibold text-slate-600 hover:text-red-600 hover:bg-red-50 transition-all"
+          >
+            <LogOut className="w-4 h-4 flex-shrink-0" />
+            <span>Logout</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+  );
+};
