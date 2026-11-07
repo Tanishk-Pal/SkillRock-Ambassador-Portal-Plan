@@ -10,6 +10,8 @@ export interface IAmbassador extends Document {
   passwordHash?: string;
   phone?: string;
   college: string;
+  linkedin?: string;
+  instagram?: string;
   city?: string;
   state?: string;
   avatar?: string;
@@ -68,6 +70,16 @@ const ambassadorSchema = new Schema<IAmbassador, IAmbassadorModel>(
       type: String,
       required: true,
       trim: true,
+    },
+    linkedin: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    instagram: {
+      type: String,
+      trim: true,
+      default: '',
     },
     city: {
       type: String,

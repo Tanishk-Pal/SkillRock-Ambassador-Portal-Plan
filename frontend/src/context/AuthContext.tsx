@@ -11,6 +11,8 @@ interface User {
   currentRank?: number;
   badgeTier?: string;
   college?: string;
+  linkedin?: string;
+  instagram?: string;
   phone?: string;
   city?: string;
   state?: string;

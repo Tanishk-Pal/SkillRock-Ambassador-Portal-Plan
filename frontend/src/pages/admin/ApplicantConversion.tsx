@@ -137,7 +137,7 @@ export const ApplicantConversion: React.FC = () => {
               </div>
               <div>
                 <h3 className="font-extrabold text-white text-lg">Ambassador Activated!</h3>
-                <p className="text-xs text-slate-400">Credentials created & 100 Welcome Points awarded.</p>
+                <p className="text-xs text-slate-400">Account activated with 0 starting points.</p>
               </div>
             </div>
 
@@ -160,7 +160,7 @@ export const ApplicantConversion: React.FC = () => {
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(
-                    `Welcome to SkillRock SSAP!\nPortal: http://localhost:5174/login\nEmail: ${conversionModal.credentials.email}\nSRID: ${conversionModal.credentials.srid}\nPassword: ${conversionModal.credentials.password}`
+                    `Welcome to SkillRock Student Ambassador Program (SSAP)!\nPortal: https://skillrock-ambassador-portal.vercel.app/login\nEmail: ${conversionModal.credentials.email}\nSRID: ${conversionModal.credentials.srid}\nPassword: ${conversionModal.credentials.password}\n\nPlease log in and link your public LinkedIn and Instagram profiles.`
                   );
                   setCopied(true);
                   setTimeout(() => setCopied(false), 2000);

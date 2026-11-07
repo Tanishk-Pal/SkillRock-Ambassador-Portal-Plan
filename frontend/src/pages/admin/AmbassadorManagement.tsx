@@ -1,6 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { adminAPI } from '../../services/api';
-import { Search, Plus, Edit2, Trash2, Award, UserCheck, ShieldAlert, X } from 'lucide-react';
+import {
+  Search,
+  Plus,
+  Edit2,
+  Trash2,
+  Award,
+  UserCheck,
+  ShieldAlert,
+  X,
+  Linkedin,
+  Instagram,
+  ExternalLink,
+  GraduationCap,
+  AlertTriangle,
+} from 'lucide-react';
 
 export const AmbassadorManagement: React.FC = () => {
   const [ambassadors, setAmbassadors] = useState<any[]>([]);
@@ -16,6 +30,8 @@ export const AmbassadorManagement: React.FC = () => {
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newCollege, setNewCollege] = useState('');
+  const [newLinkedin, setNewLinkedin] = useState('');
+  const [newInstagram, setNewInstagram] = useState('');
   const [newPhone, setNewPhone] = useState('');
   const [newPoints, setNewPoints] = useState(0);
 
@@ -47,8 +63,10 @@ export const AmbassadorManagement: React.FC = () => {
         name: newName,
         email: newEmail,
         college: newCollege,
+        linkedin: newLinkedin,
+        instagram: newInstagram,
         phone: newPhone,
-        totalPoints: newPoints,
+        totalPoints: newPoints || 0, // Starts from 0 by default!
       });
       if (res.data.success) {
         alert(res.data.message);
@@ -56,7 +74,10 @@ export const AmbassadorManagement: React.FC = () => {
         setNewName('');
         setNewEmail('');
         setNewCollege('');
+        setNewLinkedin('');
+        setNewInstagram('');
         setNewPhone('');
+        setNewPoints(0);
         fetchAmbassadors();
       }
     } catch (err: any) {
@@ -92,6 +113,8 @@ export const AmbassadorManagement: React.FC = () => {
         name: showEditModal.name,
         email: showEditModal.email,
         college: showEditModal.college,
+        linkedin: showEditModal.linkedin,
+        instagram: showEditModal.instagram,
         srid: showEditModal.srid,
         status: showEditModal.status,
       });
@@ -116,6 +139,16 @@ export const AmbassadorManagement: React.FC = () => {
     }
   };
 
+  const getLinkedinUrl = (val: string) => {
+    if (!val) return '#';
+    return val.startsWith('http') ? val : `https://linkedin.com/in/${val.replace(/^@/, '').replace(/^in\//, '')}`;
+  };
+
+  const getInstagramUrl = (val: string) => {
+    if (!val) return '#';
+    return val.startsWith('http') ? val : `https://instagram.com/${val.replace(/^@/, '')}`;
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Header */}
@@ -123,7 +156,7 @@ export const AmbassadorManagement: React.FC = () => {
         <div>
           <h2 className="text-2xl font-black text-white">Ambassador Roster & Directory</h2>
           <p className="text-xs text-slate-400 mt-1">
-            Manage ambassador credentials, unique SRIDs, point balances, and account statuses.
+            Manage ambassador credentials, unique SRIDs, college campus, public social profiles, and point balances.
           </p>
         </div>
 
@@ -159,9 +192,9 @@ export const AmbassadorManagement: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-900/60 border-b border-slate-700 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
-                <th className="py-3.5 px-6">Ambassador</th>
+                <th className="py-3.5 px-6">Ambassador & College</th>
                 <th className="py-3.5 px-6">SRID</th>
-                <th className="py-3.5 px-6">College</th>
+                <th className="py-3.5 px-6">Public Socials</th>
                 <th className="py-3.5 px-6 text-center">Points</th>
                 <th className="py-3.5 px-6 text-center">Status</th>
                 <th className="py-3.5 px-6 text-right">Actions</th>
@@ -176,13 +209,55 @@ export const AmbassadorManagement: React.FC = () => {
                 ambassadors.map((amb) => (
                   <tr key={amb._id} className="hover:bg-slate-700/40 transition-colors">
                     <td className="py-4 px-6">
-                      <div className="font-bold text-white">{amb.name}</div>
+                      <div className="font-bold text-white text-sm">{amb.name}</div>
                       <div className="text-[11px] text-slate-400">{amb.email}</div>
+                      <div className="text-[11px] text-indigo-300 flex items-center gap-1 mt-0.5 font-medium">
+                        <GraduationCap className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
+                        <span className="truncate max-w-xs">{amb.college}</span>
+                      </div>
                     </td>
                     <td className="py-4 px-6 font-mono font-bold text-indigo-400">{amb.srid}</td>
-                    <td className="py-4 px-6 text-slate-300 max-w-xs truncate">{amb.college}</td>
-                    <td className="py-4 px-6 text-center font-black font-mono text-amber-400">
-                      {amb.totalPoints}
+                    <td className="py-4 px-6">
+                      <div className="flex flex-col gap-1.5 text-xs">
+                        {amb.linkedin ? (
+                          <a
+                            href={getLinkedinUrl(amb.linkedin)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[#38BDF8] hover:underline font-medium text-[11px]"
+                          >
+                            <Linkedin className="w-3.5 h-3.5 flex-shrink-0" />
+                            <span className="truncate max-w-[140px]">{amb.linkedin.replace(/^https?:\/\/(www\.)?linkedin\.com\/in\//i, '')}</span>
+                            <ExternalLink className="w-3 h-3 text-slate-500" />
+                          </a>
+                        ) : (
+                          <span className="text-[10px] text-amber-400/80 flex items-center gap-1 font-semibold">
+                            <AlertTriangle className="w-3 h-3 text-amber-400" />
+                            Missing LinkedIn
+                          </span>
+                        )}
+
+                        {amb.instagram ? (
+                          <a
+                            href={getInstagramUrl(amb.instagram)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[#F472B6] hover:underline font-medium text-[11px]"
+                          >
+                            <Instagram className="w-3.5 h-3.5 flex-shrink-0" />
+                            <span className="truncate max-w-[140px]">{amb.instagram.startsWith('@') ? amb.instagram : `@${amb.instagram.replace(/^https?:\/\/(www\.)?instagram\.com\//i, '')}`}</span>
+                            <ExternalLink className="w-3 h-3 text-slate-500" />
+                          </a>
+                        ) : (
+                          <span className="text-[10px] text-pink-400/80 flex items-center gap-1 font-semibold">
+                            <AlertTriangle className="w-3 h-3 text-pink-400" />
+                            Missing Insta
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-4 px-6 text-center font-black font-mono text-amber-400 text-base">
+                      {amb.totalPoints || 0}
                     </td>
                     <td className="py-4 px-6 text-center">
                       <span
@@ -222,7 +297,7 @@ export const AmbassadorManagement: React.FC = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-400">No ambassadors found.</td>
+                  <td colSpan={6} className="py-8 text-center text-slate-400">No ambassadors registered yet.</td>
                 </tr>
               )}
             </tbody>
@@ -230,7 +305,7 @@ export const AmbassadorManagement: React.FC = () => {
         </div>
       </div>
 
-      {/* Add Modal */}
+      {/* Add Ambassador Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-800 rounded-3xl p-6 max-w-md w-full border border-slate-700 shadow-2xl space-y-4">
@@ -242,34 +317,59 @@ export const AmbassadorManagement: React.FC = () => {
             </div>
             <form onSubmit={handleCreate} className="space-y-3 text-xs">
               <div>
-                <label className="block text-slate-300 font-bold mb-1">Full Name</label>
+                <label className="block text-slate-300 font-bold mb-1">Full Name *</label>
                 <input
                   type="text"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   required
+                  placeholder="e.g. Khushi Sharma"
                   className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white outline-none"
                 />
               </div>
               <div>
-                <label className="block text-slate-300 font-bold mb-1">Email</label>
+                <label className="block text-slate-300 font-bold mb-1">Email *</label>
                 <input
                   type="email"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
                   required
+                  placeholder="khushi@example.com"
                   className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white outline-none"
                 />
               </div>
               <div>
-                <label className="block text-slate-300 font-bold mb-1">College</label>
+                <label className="block text-slate-300 font-bold mb-1">College / Institute *</label>
                 <input
                   type="text"
                   value={newCollege}
                   onChange={(e) => setNewCollege(e.target.value)}
                   required
+                  placeholder="e.g. Bansal College of Engineering"
                   className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white outline-none"
                 />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">Public LinkedIn</label>
+                  <input
+                    type="text"
+                    value={newLinkedin}
+                    onChange={(e) => setNewLinkedin(e.target.value)}
+                    placeholder="in/username"
+                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">Public Instagram</label>
+                  <input
+                    type="text"
+                    value={newInstagram}
+                    onChange={(e) => setNewInstagram(e.target.value)}
+                    placeholder="@username"
+                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white outline-none"
+                  />
+                </div>
               </div>
               <div>
                 <label className="block text-slate-300 font-bold mb-1">Phone</label>
@@ -277,11 +377,12 @@ export const AmbassadorManagement: React.FC = () => {
                   type="text"
                   value={newPhone}
                   onChange={(e) => setNewPhone(e.target.value)}
+                  placeholder="+91 9876543210"
                   className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white outline-none"
                 />
               </div>
               <div>
-                <label className="block text-slate-300 font-bold mb-1">Initial Points</label>
+                <label className="block text-slate-300 font-bold mb-1">Starting Points (Default: 0)</label>
                 <input
                   type="number"
                   value={newPoints}
@@ -289,7 +390,7 @@ export const AmbassadorManagement: React.FC = () => {
                   className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white outline-none"
                 />
               </div>
-              <p className="text-[11px] text-slate-400">SRID will be generated automatically (e.g. SR1028).</p>
+              <p className="text-[11px] text-slate-400">SRID will be assigned automatically (e.g. SR1008).</p>
               <div className="pt-2 flex justify-end gap-2">
                 <button
                   type="button"
@@ -318,7 +419,7 @@ export const AmbassadorManagement: React.FC = () => {
               </button>
             </div>
             <form onSubmit={handleAdjustPoints} className="space-y-3 text-xs">
-              <p className="text-slate-400">Current Balance: <strong className="text-amber-400">{showPointsModal.totalPoints} pts</strong></p>
+              <p className="text-slate-400">Current Balance: <strong className="text-amber-400">{showPointsModal.totalPoints || 0} pts</strong></p>
               <div>
                 <label className="block text-slate-300 font-bold mb-1">Points Delta (+ to add, - to deduct)</label>
                 <input
@@ -392,11 +493,33 @@ export const AmbassadorManagement: React.FC = () => {
                 <label className="block text-slate-300 font-bold mb-1">College</label>
                 <input
                   type="text"
-                  value={showEditModal.college}
+                  value={showEditModal.college || ''}
                   onChange={(e) => setShowEditModal({ ...showEditModal, college: e.target.value })}
                   required
                   className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white outline-none"
                 />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">Public LinkedIn</label>
+                  <input
+                    type="text"
+                    value={showEditModal.linkedin || ''}
+                    onChange={(e) => setShowEditModal({ ...showEditModal, linkedin: e.target.value })}
+                    placeholder="in/username"
+                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">Public Instagram</label>
+                  <input
+                    type="text"
+                    value={showEditModal.instagram || ''}
+                    onChange={(e) => setShowEditModal({ ...showEditModal, instagram: e.target.value })}
+                    placeholder="@username"
+                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white outline-none"
+                  />
+                </div>
               </div>
               <div>
                 <label className="block text-slate-300 font-bold mb-1">Account Status</label>

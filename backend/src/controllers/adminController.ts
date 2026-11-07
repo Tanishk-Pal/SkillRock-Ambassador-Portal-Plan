@@ -94,7 +94,7 @@ export const getAllAmbassadors = async (req: Request, res: Response) => {
 
 export const createAmbassador = async (req: Request, res: Response) => {
   try {
-    const { name, email, college, city, state, phone, password, srid, totalPoints } = req.body;
+    const { name, email, college, linkedin, instagram, city, state, phone, password, srid, totalPoints } = req.body;
 
     if (!name || !email || !college) {
       return res.status(400).json({ success: false, message: 'Name, email, and college are required.' });
@@ -115,14 +115,16 @@ export const createAmbassador = async (req: Request, res: Response) => {
     const passwordToHash = password && password.trim() ? password.trim() : 'SkillRock@2026';
     const passwordHash = await bcrypt.hash(passwordToHash, 12);
 
-    const initialPoints = Number(totalPoints) || 0;
-    const badgeTier = Ambassador.calculateBadgeTier(initialPoints);
+    const initialPoints = totalPoints !== undefined ? Number(totalPoints) : 0;
+    const badgeTier = Ambassador.calculateBadgeTier(initialPoints) || 'The Explorer';
 
     const ambassador = await Ambassador.create({
       srid: finalSrid,
       name: name.trim(),
       email: cleanEmail,
       college: college.trim(),
+      linkedin: linkedin ? linkedin.trim() : '',
+      instagram: instagram ? instagram.trim() : '',
       city: city ? city.trim() : 'India',
       state: state ? state.trim() : '',
       phone: phone ? phone.trim() : '',
@@ -149,7 +151,7 @@ export const createAmbassador = async (req: Request, res: Response) => {
 export const updateAmbassador = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, email, college, city, state, phone, srid, status, password } = req.body;
+    const { name, email, college, linkedin, instagram, city, state, phone, srid, status, password } = req.body;
 
     const ambassador = await Ambassador.findById(id);
     if (!ambassador) {
@@ -159,6 +161,8 @@ export const updateAmbassador = async (req: Request, res: Response) => {
     if (name) ambassador.name = name.trim();
     if (email) ambassador.email = email.trim().toLowerCase();
     if (college) ambassador.college = college.trim();
+    if (linkedin !== undefined) ambassador.linkedin = linkedin.trim();
+    if (instagram !== undefined) ambassador.instagram = instagram.trim();
     if (city !== undefined) ambassador.city = city.trim();
     if (state !== undefined) ambassador.state = state.trim();
     if (phone !== undefined) ambassador.phone = phone.trim();
@@ -273,11 +277,13 @@ export const convertApplicantToAmbassador = async (req: Request, res: Response) 
       name: applicant.fullName,
       email: cleanEmail,
       college: applicant.college || 'College Campus',
+      linkedin: (applicant as any).linkedin || (applicant as any).linkedinUrl || '',
+      instagram: (applicant as any).instagram || (applicant as any).instagramHandle || '',
       city: applicant.city || 'India',
       state: applicant.state || '',
       phone: applicant.phone || '',
       passwordHash,
-      totalPoints: 100, // Welcome bonus points!
+      totalPoints: 0, // Ambassadors strictly start from 0 points
       badgeTier: 'The Explorer',
       badges: ['The Explorer'],
       status: 'active',
@@ -288,14 +294,6 @@ export const convertApplicantToAmbassador = async (req: Request, res: Response) 
     applicant.ambassadorSrid = nextSRID;
     applicant.status = 'selected';
     await applicant.save();
-
-    await awardOrDeductPoints({
-      ambassadorId: newAmbassador._id,
-      amount: 100,
-      type: 'bonus',
-      reason: 'Welcome Bonus on Ambassador Appointment',
-      adminId: req.user!.id,
-    });
 
     await recalculateAllRanks();
 

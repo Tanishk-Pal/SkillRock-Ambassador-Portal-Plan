@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Header } from '../../components/Header';
 import { Sidebar } from '../../components/Sidebar';
 import { HeroBanner } from '../../components/HeroBanner';
@@ -6,7 +7,7 @@ import { TaskCard } from '../../components/TaskCard';
 import { TaskSubmissionModal } from '../../components/TaskSubmissionModal';
 import { ambassadorAPI, taskAPI } from '../../services/api';
 import { DashboardData, Task } from '../../types';
-import { CheckCircle2, Award, TrendingUp, MessageCircle, RefreshCw } from 'lucide-react';
+import { CheckCircle2, Award, TrendingUp, MessageCircle, RefreshCw, AlertTriangle } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -67,10 +68,38 @@ export const Dashboard: React.FC = () => {
           <HeroBanner
             name={amb?.name || 'Ambassador'}
             srid={amb?.srid || 'SR1001'}
+            college={amb?.college}
+            linkedin={amb?.linkedin}
+            instagram={amb?.instagram}
             badgeTier={amb?.badgeTier || 'The Explorer'}
             rank={amb?.currentRank || 1}
             totalPoints={amb?.totalPoints || 0}
           />
+
+          {/* Social Profiles Mandatory Notice if missing */}
+          {(!amb?.linkedin || !amb?.instagram) && (
+            <div className="bg-amber-50 border border-amber-200/90 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center flex-shrink-0 font-bold shadow-xs">
+                  <AlertTriangle className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-bold text-amber-900">
+                    Mandatory: Connect Your Public LinkedIn & Instagram
+                  </h4>
+                  <p className="text-[11px] sm:text-xs text-amber-700 mt-0.5">
+                    Ambassadors are required to provide their public social profiles. Private accounts cannot be verified for monthly reels, highlights, or rewards.
+                  </p>
+                </div>
+              </div>
+              <Link
+                to="/profile"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-sm transition-colors flex-shrink-0"
+              >
+                Complete Profile &rarr;
+              </Link>
+            </div>
+          )}
 
           {/* Quick Metrics Bar */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">

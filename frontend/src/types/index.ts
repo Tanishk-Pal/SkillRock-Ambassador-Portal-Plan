@@ -6,6 +6,8 @@ export interface Ambassador {
   email: string;
   phone?: string;
   college: string;
+  linkedin?: string;
+  instagram?: string;
   city?: string;
   state?: string;
   avatar?: string;

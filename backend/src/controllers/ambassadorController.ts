@@ -50,6 +50,8 @@ export const getAmbassadorDashboard = async (req: Request, res: Response) => {
           name: ambassador.name,
           email: ambassador.email,
           college: ambassador.college,
+          linkedin: ambassador.linkedin || '',
+          instagram: ambassador.instagram || '',
           city: ambassador.city,
           state: ambassador.state,
           avatar: ambassador.avatar,
@@ -138,13 +140,16 @@ export const getMySales = async (req: Request, res: Response) => {
 export const updateAmbassadorProfile = async (req: Request, res: Response) => {
   try {
     const ambassadorId = req.user!.id;
-    const { phone, city, state, avatar } = req.body;
+    const { phone, city, state, avatar, college, linkedin, instagram } = req.body;
 
     const ambassador = await Ambassador.findById(ambassadorId);
     if (!ambassador) {
       return res.status(404).json({ success: false, message: 'Ambassador not found.' });
     }
 
+    if (college !== undefined && college.trim()) ambassador.college = college.trim();
+    if (linkedin !== undefined) ambassador.linkedin = linkedin.trim();
+    if (instagram !== undefined) ambassador.instagram = instagram.trim();
     if (phone !== undefined) ambassador.phone = phone.trim();
     if (city !== undefined) ambassador.city = city.trim();
     if (state !== undefined) ambassador.state = state.trim();
@@ -161,6 +166,8 @@ export const updateAmbassadorProfile = async (req: Request, res: Response) => {
         email: ambassador.email,
         phone: ambassador.phone,
         college: ambassador.college,
+        linkedin: ambassador.linkedin || '',
+        instagram: ambassador.instagram || '',
         city: ambassador.city,
         state: ambassador.state,
         avatar: ambassador.avatar,
