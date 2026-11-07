@@ -330,6 +330,7 @@ export const createTaskAdmin = async (req: Request, res: Response) => {
       taskNumber,
       title,
       category,
+      submissionType,
       briefMonth,
       shortDescription,
       fullDescription,
@@ -355,6 +356,7 @@ export const createTaskAdmin = async (req: Request, res: Response) => {
       taskNumber: finalTaskNumber,
       title: title.trim(),
       category: category || 'Product Trials',
+      submissionType: submissionType || 'custom',
       briefMonth: briefMonth || "MONTH'S BRIEF",
       shortDescription: shortDescription.trim(),
       fullDescription: fullDescription.trim(),
@@ -406,12 +408,30 @@ export const getAllSubmissionsAdmin = async (req: Request, res: Response) => {
     if (taskId) filter.taskId = taskId;
 
     const submissions = await TaskSubmission.find(filter)
-      .populate('taskId', 'title points taskNumber category')
-      .populate('ambassadorId', 'name email college srid avatar')
+      .populate('taskId', 'title points taskNumber category submissionType')
+      .populate('ambassadorId', 'name email college srid avatar linkedin instagram')
       .sort({ createdAt: -1 })
       .lean();
 
-    return res.json({ success: true, submissions });
+    // Attach verified sales data for each ambassador if available
+    const populatedSubmissions = await Promise.all(
+      submissions.map(async (sub: any) => {
+        const sales = await CourseSale.find({ srid: sub.srid, paymentStatus: 'paid' }).lean();
+        const totalSalesRevenue = sales.reduce((acc, s) => acc + s.coursePrice, 0);
+        const totalCommission = sales.reduce((acc, s) => acc + s.commissionAmount, 0);
+
+        return {
+          ...sub,
+          verifiedSalesSummary: {
+            totalPaidOrders: sales.length,
+            totalRevenue: totalSalesRevenue,
+            totalCommission,
+          },
+        };
+      })
+    );
+
+    return res.json({ success: true, submissions: populatedSubmissions });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error.message });
   }
@@ -424,6 +444,13 @@ export const reviewSubmissionAdmin = async (req: Request, res: Response) => {
 
     if (!action || !['approve', 'reject'].includes(action)) {
       return res.status(400).json({ success: false, message: "Action must be 'approve' or 'reject'." });
+    }
+
+    if (action === 'reject' && (!feedback || !feedback.trim())) {
+      return res.status(400).json({
+        success: false,
+        message: 'A rejection reason / correction guidance is required so the ambassador knows what to fix.',
+      });
     }
 
     const submission = await TaskSubmission.findById(submissionId).populate('taskId');
@@ -441,7 +468,7 @@ export const reviewSubmissionAdmin = async (req: Request, res: Response) => {
     if (action === 'approve') {
       submission.status = 'approved';
       submission.awardedPoints = pointsToAward;
-      submission.adminFeedback = feedback || 'Excellent work! Task verified.';
+      submission.adminFeedback = feedback ? feedback.trim() : 'Great work! Task submission verified & approved.';
       submission.reviewedBy = req.user!.id as any;
       submission.reviewedAt = new Date();
       await submission.save();
@@ -465,7 +492,7 @@ export const reviewSubmissionAdmin = async (req: Request, res: Response) => {
     } else {
       submission.status = 'rejected';
       submission.awardedPoints = 0;
-      submission.adminFeedback = feedback || 'Requirements not met. Please review instructions and resubmit.';
+      submission.adminFeedback = feedback.trim();
       submission.reviewedBy = req.user!.id as any;
       submission.reviewedAt = new Date();
       await submission.save();

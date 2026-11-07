@@ -2,16 +2,38 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export type SubmissionStatus = 'submitted' | 'under_review' | 'approved' | 'rejected';
 
+export interface ITaskSubmissionData {
+  submissionType?: 'reel_challenge' | 'monthly_highlight' | 'campus_growth' | 'affiliate_sales' | 'custom';
+  // Reel Challenge
+  instagramReelUrl?: string;
+  linkedinPostUrl?: string;
+  driveVideoUrl?: string;
+  // Monthly Highlight
+  driveCarouselUrl?: string;
+  // Campus Growth
+  studentsReached?: number;
+  registrationsGenerated?: number;
+  studentsLearningStarted?: number;
+  driveVideoLinks?: string[];
+  // Affiliate & Sales
+  coursesPromotedCount?: number;
+  salesGeneratedCount?: number;
+  courseNames?: string;
+  promotionalUrls?: string[];
+  // Common / Legacy
+  textResponse?: string;
+  additionalComments?: string;
+  links?: string[];
+  filePaths?: string[];
+  videoUrl?: string;
+  [key: string]: any;
+}
+
 export interface ITaskSubmission extends Document {
   taskId: mongoose.Types.ObjectId;
   ambassadorId: mongoose.Types.ObjectId;
   srid: string;
-  submissionData: {
-    textResponse?: string;
-    links?: string[];
-    filePaths?: string[];
-    videoUrl?: string;
-  };
+  submissionData: ITaskSubmissionData;
   status: SubmissionStatus;
   awardedPoints: number;
   adminFeedback?: string;
@@ -43,10 +65,8 @@ const taskSubmissionSchema = new Schema<ITaskSubmission>(
       index: true,
     },
     submissionData: {
-      textResponse: { type: String, default: '' },
-      links: { type: [String], default: [] },
-      filePaths: { type: [String], default: [] },
-      videoUrl: { type: String, default: '' },
+      type: Schema.Types.Mixed,
+      default: {},
     },
     status: {
       type: String,

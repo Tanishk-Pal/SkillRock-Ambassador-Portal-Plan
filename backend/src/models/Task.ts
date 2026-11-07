@@ -7,12 +7,20 @@ export type TaskCategory =
   | 'Product Understanding'
   | 'Campus Leadership';
 
+export type TaskSubmissionType =
+  | 'reel_challenge'
+  | 'monthly_highlight'
+  | 'campus_growth'
+  | 'affiliate_sales'
+  | 'custom';
+
 export type TaskStatus = 'active' | 'draft' | 'archived';
 
 export interface ITask extends Document {
   taskNumber: number;
   title: string;
   category: TaskCategory;
+  submissionType?: TaskSubmissionType;
   briefMonth: string;
   shortDescription: string;
   fullDescription: string;
@@ -50,6 +58,11 @@ const taskSchema = new Schema<ITask>(
         'Campus Leadership',
       ],
       default: 'Product Trials',
+    },
+    submissionType: {
+      type: String,
+      enum: ['reel_challenge', 'monthly_highlight', 'campus_growth', 'affiliate_sales', 'custom'],
+      default: 'custom',
     },
     briefMonth: {
       type: String,

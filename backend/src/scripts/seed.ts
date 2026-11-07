@@ -66,6 +66,7 @@ export const seedDatabase = async () => {
         points: 500,
         deadline: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000), // 25 days
         isMandatory: true,
+        submissionType: 'campus_growth',
         allowedSubmissionTypes: ['text', 'url', 'image'],
         submissionRequirements: [
           'Summary of session (minimum 100 words)',
@@ -92,6 +93,7 @@ export const seedDatabase = async () => {
         points: 600,
         deadline: new Date(Date.now() + 28 * 24 * 60 * 60 * 1000),
         isMandatory: true,
+        submissionType: 'reel_challenge',
         allowedSubmissionTypes: ['url', 'video_url', 'image'],
         submissionRequirements: [
           'Direct public link to the Reel / Post',
@@ -117,6 +119,7 @@ export const seedDatabase = async () => {
         points: 400,
         deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         isMandatory: true,
+        submissionType: 'monthly_highlight',
         allowedSubmissionTypes: ['url', 'text'],
         submissionRequirements: [
           'Live LinkedIn post URL',
@@ -141,6 +144,7 @@ export const seedDatabase = async () => {
         points: 300,
         deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         isMandatory: false,
+        submissionType: 'campus_growth',
         allowedSubmissionTypes: ['text', 'document', 'url'],
         submissionRequirements: [
           'Structured UX feedback report (minimum 3 actionable suggestions)',

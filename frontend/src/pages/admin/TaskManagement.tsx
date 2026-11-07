@@ -13,6 +13,9 @@ export const TaskManagement: React.FC = () => {
   const [taskNumber, setTaskNumber] = useState<number>(1);
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<any>('Product Trials');
+  const [submissionType, setSubmissionType] = useState<
+    'reel_challenge' | 'monthly_highlight' | 'campus_growth' | 'affiliate_sales' | 'custom'
+  >('custom');
   const [shortDescription, setShortDescription] = useState('');
   const [fullDescription, setFullDescription] = useState('');
   const [points, setPoints] = useState<number>(500);
@@ -41,6 +44,7 @@ export const TaskManagement: React.FC = () => {
     setTaskNumber(tasks.length + 1);
     setTitle('');
     setCategory('Product Trials');
+    setSubmissionType('custom');
     setShortDescription('');
     setFullDescription('');
     setPoints(500);
@@ -54,6 +58,7 @@ export const TaskManagement: React.FC = () => {
     setTaskNumber(task.taskNumber);
     setTitle(task.title);
     setCategory(task.category);
+    setSubmissionType(task.submissionType || 'custom');
     setShortDescription(task.shortDescription);
     setFullDescription(task.fullDescription);
     setPoints(task.points);
@@ -69,6 +74,7 @@ export const TaskManagement: React.FC = () => {
         taskNumber,
         title,
         category,
+        submissionType,
         shortDescription,
         fullDescription,
         points: Number(points),
@@ -126,9 +132,20 @@ export const TaskManagement: React.FC = () => {
           <div key={task._id} className="bg-slate-800/90 p-6 rounded-3xl border border-slate-700 shadow-md flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-slate-700 text-indigo-300 border border-slate-600">
-                  Task #{task.taskNumber} • {task.category}
-                </span>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-slate-700 text-indigo-300 border border-slate-600">
+                    Task #{task.taskNumber} • {task.category}
+                  </span>
+                  {task.submissionType && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                      {task.submissionType === 'reel_challenge' && 'Reel (IG+LI)'}
+                      {task.submissionType === 'monthly_highlight' && 'Monthly Highlight'}
+                      {task.submissionType === 'campus_growth' && 'Campus Growth'}
+                      {task.submissionType === 'affiliate_sales' && 'Affiliate & Sales'}
+                      {task.submissionType === 'custom' && 'Standard Form'}
+                    </span>
+                  )}
+                </div>
                 <span className="text-xs font-mono font-bold text-amber-400">
                   +{task.points} pts
                 </span>
@@ -202,19 +219,35 @@ export const TaskManagement: React.FC = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-slate-300 font-bold mb-1">Task Category</label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value as any)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white"
-                >
-                  <option value="Product Trials">Product Trials</option>
-                  <option value="Content Creation">Content Creation</option>
-                  <option value="Monthly Highlights">Monthly Highlights</option>
-                  <option value="Product Understanding">Product Understanding</option>
-                  <option value="Campus Leadership">Campus Leadership</option>
-                </select>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">Task Category</label>
+                  <select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value as any)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white"
+                  >
+                    <option value="Product Trials">Product Trials</option>
+                    <option value="Content Creation">Content Creation</option>
+                    <option value="Monthly Highlights">Monthly Highlights</option>
+                    <option value="Product Understanding">Product Understanding</option>
+                    <option value="Campus Leadership">Campus Leadership</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">Dynamic Submission Form</label>
+                  <select
+                    value={submissionType}
+                    onChange={(e) => setSubmissionType(e.target.value as any)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white"
+                  >
+                    <option value="reel_challenge">Reel Challenge (IG + LinkedIn)</option>
+                    <option value="monthly_highlight">Monthly Highlight (LinkedIn)</option>
+                    <option value="campus_growth">Campus Growth (Students & Drive Videos)</option>
+                    <option value="affiliate_sales">Affiliate & Earn (Sales & Courses)</option>
+                    <option value="custom">Standard / Custom Form</option>
+                  </select>
+                </div>
               </div>
 
               <div>

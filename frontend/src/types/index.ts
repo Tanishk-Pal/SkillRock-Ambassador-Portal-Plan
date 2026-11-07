@@ -26,6 +26,7 @@ export interface Task {
   taskNumber: number;
   title: string;
   category: 'Product Trials' | 'Content Creation' | 'Monthly Highlights' | 'Product Understanding' | 'Campus Leadership';
+  submissionType?: 'reel_challenge' | 'monthly_highlight' | 'campus_growth' | 'affiliate_sales' | 'custom';
   briefMonth: string;
   shortDescription: string;
   fullDescription: string;
@@ -40,23 +41,50 @@ export interface Task {
   submission?: TaskSubmission | null;
 }
 
+export interface TaskSubmissionData {
+  submissionType?: 'reel_challenge' | 'monthly_highlight' | 'campus_growth' | 'affiliate_sales' | 'custom';
+  // Reel Challenge
+  instagramReelUrl?: string;
+  linkedinPostUrl?: string;
+  driveVideoUrl?: string;
+  // Monthly Highlight
+  driveCarouselUrl?: string;
+  // Campus Growth
+  studentsReached?: number;
+  registrationsGenerated?: number;
+  studentsLearningStarted?: number;
+  driveVideoLinks?: string[];
+  // Affiliate & Sales
+  coursesPromotedCount?: number;
+  salesGeneratedCount?: number;
+  courseNames?: string;
+  promotionalUrls?: string[];
+  // Common / Legacy
+  textResponse?: string;
+  additionalComments?: string;
+  links?: string[];
+  filePaths?: string[];
+  videoUrl?: string;
+  [key: string]: any;
+}
+
 export interface TaskSubmission {
   _id: string;
   taskId: string | any;
   ambassadorId: string | any;
   srid: string;
-  submissionData: {
-    textResponse?: string;
-    links?: string[];
-    filePaths?: string[];
-    videoUrl?: string;
-  };
+  submissionData: TaskSubmissionData;
   status: 'submitted' | 'under_review' | 'approved' | 'rejected';
   awardedPoints: number;
   adminFeedback?: string;
   submittedAt: string;
   reviewedAt?: string;
   resubmissionCount: number;
+  verifiedSalesSummary?: {
+    totalPaidOrders: number;
+    totalRevenue: number;
+    totalCommission: number;
+  };
 }
 
 export interface PointsTransaction {
