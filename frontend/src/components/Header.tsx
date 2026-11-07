@@ -31,19 +31,28 @@ export const Header: React.FC<HeaderProps> = ({ score }) => {
 
         {/* Right: Score Pill & Profile */}
         <div className="flex items-center gap-3 sm:gap-4">
-          {/* Google Student Ambassador Inspired Score Pill */}
-          <Link
-            to="/my-points"
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold text-sm shadow-sm hover:shadow hover:scale-[1.02] active:scale-[0.98] transition-all"
-          >
-            <Award className="w-4 h-4 text-amber-300" />
-            <span>Score: {displayScore.toLocaleString()} pts</span>
-          </Link>
+          {user?.role === 'admin' || user?.role === 'superadmin' || (user?.role as string) === 'super_admin' ? (
+            <Link
+              to="/admin/dashboard"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-slate-900 text-white font-bold text-xs shadow-sm hover:bg-slate-800 transition-all border border-slate-700"
+            >
+              <span>⚙️ Editor / Admin Console</span>
+            </Link>
+          ) : (
+            /* Google Student Ambassador Inspired Score Pill */
+            <Link
+              to="/my-points"
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold text-sm shadow-sm hover:shadow hover:scale-[1.02] active:scale-[0.98] transition-all"
+            >
+              <Award className="w-4 h-4 text-amber-300" />
+              <span>Score: {displayScore.toLocaleString()} pts</span>
+            </Link>
+          )}
 
           {/* User Profile Pill */}
           <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
             <Link
-              to="/profile"
+              to={user?.role === 'admin' ? '/admin/dashboard' : '/profile'}
               className="flex items-center gap-2 px-2.5 py-1 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors"
               title="View Profile"
             >
@@ -51,8 +60,12 @@ export const Header: React.FC<HeaderProps> = ({ score }) => {
                 {user?.name ? user.name.charAt(0) : <UserIcon className="w-4 h-4" />}
               </div>
               <div className="hidden md:block text-left">
-                <p className="text-xs font-bold text-slate-800 leading-tight">{user?.name || 'Ambassador'}</p>
-                <p className="text-[10px] text-slate-500 font-mono font-medium">{user?.srid || 'SR0000'}</p>
+                <p className="text-xs font-bold text-slate-800 leading-tight">
+                  {user?.name || (user?.role === 'admin' ? 'SSAP Admin' : 'Ambassador')}
+                </p>
+                <p className="text-[10px] text-slate-500 font-mono font-medium">
+                  {user?.role === 'admin' ? 'Admin / Editor' : user?.srid || 'SR0000'}
+                </p>
               </div>
             </Link>
 

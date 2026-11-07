@@ -21,14 +21,21 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) 
     return <Navigate to={requiredRole === 'admin' ? '/admin/login' : '/login'} replace />;
   }
 
+  const roleStr = (user.role || '').toLowerCase();
+  const isAdmin =
+    roleStr === 'admin' ||
+    roleStr === 'superadmin' ||
+    roleStr === 'super_admin' ||
+    roleStr.includes('admin');
+
   if (requiredRole === 'admin') {
-    if (user.role !== 'admin' && user.role !== 'superadmin') {
+    if (!isAdmin) {
       return <Navigate to="/dashboard" replace />;
     }
   }
 
   if (requiredRole === 'ambassador') {
-    if (user.role === 'admin' || user.role === 'superadmin') {
+    if (isAdmin) {
       return <Navigate to="/admin/dashboard" replace />;
     }
   }

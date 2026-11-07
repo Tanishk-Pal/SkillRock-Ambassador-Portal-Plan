@@ -126,9 +126,9 @@ const ambassadorSchema = new Schema<IAmbassador, IAmbassadorModel>(
 );
 
 ambassadorSchema.statics.calculateBadgeTier = function (points: number): BadgeTier | null {
-  if (points >= 2400) return 'The Visionary';
-  if (points >= 1800) return 'The Architect';
-  if (points >= 1200) return 'The Navigator';
+  if (points >= 2400) return 'SkillRock Champ';
+  if (points >= 1800) return 'The Changemaker';
+  if (points >= 1200) return 'The Trailblazer';
   if (points >= 600) return 'The Explorer';
   return 'The Explorer';
 };

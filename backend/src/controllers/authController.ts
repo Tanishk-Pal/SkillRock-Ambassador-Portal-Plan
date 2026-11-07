@@ -13,6 +13,35 @@ export const ambassadorLogin = async (req: Request, res: Response) => {
     }
 
     const cleanEmail = email.trim().toLowerCase();
+
+    // 1. Check if user is an Admin logging in from the unified login page
+    const admin = await Admin.findOne({ email: cleanEmail });
+    if (admin) {
+      const isMatch = await bcrypt.compare(password, admin.passwordHash);
+      if (!isMatch) {
+        return res.status(401).json({ success: false, message: 'Invalid email or password.' });
+      }
+
+      const token = signToken({
+        id: admin._id.toString(),
+        role: 'admin',
+        email: admin.email,
+        name: admin.name,
+      });
+
+      return res.json({
+        success: true,
+        token,
+        user: {
+          id: admin._id,
+          name: admin.name,
+          email: admin.email,
+          role: 'admin',
+        },
+      });
+    }
+
+    // 2. Check Ambassador accounts
     const ambassador = await Ambassador.findOne({ email: cleanEmail });
 
     if (!ambassador) {
@@ -83,7 +112,7 @@ export const adminLogin = async (req: Request, res: Response) => {
 
     const token = signToken({
       id: admin._id.toString(),
-      role: admin.role || 'admin',
+      role: 'admin',
       email: admin.email,
       name: admin.name,
     });
@@ -95,7 +124,7 @@ export const adminLogin = async (req: Request, res: Response) => {
         id: admin._id,
         name: admin.name,
         email: admin.email,
-        role: admin.role || 'admin',
+        role: 'admin',
       },
     });
   } catch (error: any) {
@@ -171,9 +200,23 @@ export const getMe = async (req: Request, res: Response) => {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
-    if (req.user.role === 'admin' || req.user.role === 'superadmin') {
+    const role = (req.user.role || '').toLowerCase();
+    const isAdmin = role === 'admin' || role === 'superadmin' || role === 'super_admin' || role.includes('admin');
+
+    if (isAdmin) {
       const admin = await Admin.findById(req.user.id).select('-passwordHash');
-      return res.json({ success: true, user: { ...admin?.toObject(), role: req.user.role } });
+      if (!admin) {
+        return res.status(404).json({ success: false, message: 'Admin profile not found.' });
+      }
+      return res.json({
+        success: true,
+        user: {
+          id: admin._id,
+          name: admin.name,
+          email: admin.email,
+          role: 'admin',
+        },
+      });
     }
 
     const ambassador = await Ambassador.findById(req.user.id).select('-passwordHash');

@@ -21,16 +21,16 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
 
   // Determine badge badge styling
   const getBadgeStyle = (tier: string) => {
-    if (tier.includes('Visionary') || tier.includes('Champ')) {
-      return { label: 'SAPPHIRE BADGE', bg: 'bg-blue-400/20 text-blue-200', border: 'border-blue-300/30' };
+    if (tier.includes('Champ') || tier.includes('Visionary')) {
+      return { label: 'ELITE CHAMP BADGE', bg: 'bg-blue-400/20 text-blue-200', border: 'border-blue-300/30' };
     }
-    if (tier.includes('Architect') || tier.includes('Gold')) {
-      return { label: 'GOLD BADGE', bg: 'bg-amber-400/20 text-amber-200', border: 'border-amber-300/30' };
+    if (tier.includes('Changemaker') || tier.includes('Architect')) {
+      return { label: 'CHANGEMAKER BADGE', bg: 'bg-emerald-400/20 text-emerald-200', border: 'border-emerald-300/30' };
     }
-    if (tier.includes('Navigator') || tier.includes('Silver')) {
-      return { label: 'SILVER BADGE', bg: 'bg-slate-300/20 text-slate-200', border: 'border-slate-300/30' };
+    if (tier.includes('Trailblazer') || tier.includes('Navigator')) {
+      return { label: 'TRAILBLAZER BADGE', bg: 'bg-indigo-400/20 text-indigo-200', border: 'border-indigo-300/30' };
     }
-    return { label: 'BRONZE BADGE', bg: 'bg-orange-400/20 text-orange-200', border: 'border-orange-300/30' };
+    return { label: 'EXPLORER BADGE', bg: 'bg-orange-400/20 text-orange-200', border: 'border-orange-300/30' };
   };
 
   const badgeConfig = getBadgeStyle(badgeTier);

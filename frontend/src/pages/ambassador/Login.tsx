@@ -22,7 +22,12 @@ export const Login: React.FC = () => {
       const res = await authAPI.login({ email, password });
       if (res.data.success && res.data.token) {
         login(res.data.token, res.data.user);
-        navigate('/dashboard');
+        const role = (res.data.user.role || '').toLowerCase();
+        if (role === 'admin' || role === 'superadmin' || role === 'super_admin' || role.includes('admin')) {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/dashboard');
+        }
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Invalid email or password. Please try again.');

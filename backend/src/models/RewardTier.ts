@@ -1,6 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IRewardTier extends Document {
+  monthLabel?: string;
   tierCategory: string;
   pointsRequired: number;
   physicalRewards: string;
@@ -14,6 +15,10 @@ export interface IRewardTier extends Document {
 
 const rewardTierSchema = new Schema<IRewardTier>(
   {
+    monthLabel: {
+      type: String,
+      default: 'MONTH 1',
+    },
     tierCategory: {
       type: String,
       required: true,

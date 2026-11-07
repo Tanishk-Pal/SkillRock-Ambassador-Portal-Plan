@@ -88,6 +88,7 @@ export interface CourseSale {
 
 export interface RewardTier {
   _id: string;
+  monthLabel?: string;
   tierCategory: string;
   pointsRequired: number;
   physicalRewards: string;

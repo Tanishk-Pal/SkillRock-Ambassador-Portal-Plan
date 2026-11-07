@@ -47,7 +47,7 @@ export const RewardsManagement: React.FC = () => {
       <div className="bg-slate-800/90 p-6 rounded-3xl border border-slate-700 shadow-xl">
         <h2 className="text-2xl font-black text-white">Reward Tiers & Milestone Perks</h2>
         <p className="text-xs text-slate-400 mt-1">
-          Customize the 4-tier recognition scheme (Explorer, Navigator, Architect, Visionary), physical gifts, and point thresholds.
+          Customize the 4-month progression scheme (The Explorer, The Trailblazer, The Changemaker, SkillRock Champ), physical gifts, and point thresholds.
         </p>
       </div>
 

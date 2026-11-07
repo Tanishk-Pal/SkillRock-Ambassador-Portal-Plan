@@ -6,7 +6,7 @@ interface User {
   name: string;
   email: string;
   srid?: string;
-  role: 'ambassador' | 'admin' | 'superadmin';
+  role: 'ambassador' | 'admin' | 'superadmin' | 'super_admin';
   totalPoints?: number;
   currentRank?: number;
   badgeTier?: string;
@@ -19,7 +19,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  role: 'ambassador' | 'admin' | 'superadmin' | null;
+  role: 'ambassador' | 'admin' | 'superadmin' | 'super_admin' | null;
   token: string | null;
   loading: boolean;
   login: (token: string, user: User) => void;
@@ -68,14 +68,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [token]);
 
   const login = (newToken: string, newUser: User) => {
+    // Normalize admin role
+    const normalizedRole =
+      newUser.role === 'admin' || newUser.role === 'superadmin' || (newUser.role as string) === 'super_admin'
+        ? 'admin'
+        : 'ambassador';
+    const normalizedUser = { ...newUser, role: normalizedRole as 'admin' | 'ambassador' };
     localStorage.setItem('token', newToken);
-    localStorage.setItem('user', JSON.stringify(newUser));
+    localStorage.setItem('user', JSON.stringify(normalizedUser));
     setToken(newToken);
-    setUser(newUser);
+    setUser(normalizedUser);
   };
 
   const logout = () => {
-    const wasAdmin = user?.role === 'admin' || user?.role === 'superadmin';
+    const wasAdmin =
+      user?.role === 'admin' || user?.role === 'superadmin' || (user?.role as string) === 'super_admin';
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setToken(null);

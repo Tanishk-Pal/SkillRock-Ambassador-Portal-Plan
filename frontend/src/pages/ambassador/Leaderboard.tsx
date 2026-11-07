@@ -196,7 +196,23 @@ export const Leaderboard: React.FC = () => {
                     })
                   ) : (
                     <tr>
-                      <td colSpan={6} className="py-8 text-center text-slate-400">No ambassadors found matching search.</td>
+                      <td colSpan={6} className="py-12 text-center text-slate-500">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <Trophy className="w-8 h-8 text-slate-300" />
+                          <p className="font-semibold text-sm text-slate-700">No ambassadors onboarded yet</p>
+                          <p className="text-xs text-slate-400 max-w-sm">
+                            Approved student ambassadors will appear on the leaderboard as tasks and verified submissions are processed.
+                          </p>
+                          {(user?.role === 'admin' || user?.role === 'superadmin' || (user?.role as string) === 'super_admin') && (
+                            <a
+                              href="/admin/applicants"
+                              className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold shadow-md hover:bg-indigo-700 transition-colors"
+                            >
+                              Review & Onboard Applicants
+                            </a>
+                          )}
+                        </div>
+                      </td>
                     </tr>
                   )}
                 </tbody>

@@ -24,12 +24,13 @@ export const seedDatabase = async () => {
     await Admin.create({
       email: adminEmail,
       passwordHash,
-      name: 'SSAP Admin',
-      role: 'superadmin',
+      name: 'Tanishk Pal (Director)',
+      role: 'admin',
     });
     console.log(`[Seed] Created Admin account: ${adminEmail}`);
   } else {
     existingAdmin.passwordHash = passwordHash;
+    existingAdmin.role = 'admin';
     await existingAdmin.save();
     console.log(`[Seed] Updated Admin credentials for: ${adminEmail}`);
   }
@@ -153,49 +154,53 @@ export const seedDatabase = async () => {
     console.log('[Seed] Inserted 4 initial dynamic task slots.');
   }
 
-  // 3. Reward Tiers
+  // 3. Exact 4-Month Reward Tiers matching SkillRock Milestone Structure
   const rewardTierCount = await RewardTier.countDocuments();
   if (rewardTierCount === 0) {
     const defaultTiers = [
       {
-        tierCategory: 'The Explorer (Bronze)',
+        monthLabel: 'MONTH 1',
+        tierCategory: 'The Explorer',
         pointsRequired: 600,
-        physicalRewards: '₹500 e-voucher + Premium SkillRock Diary',
-        digitalRewards: 'Bronze Ambassador Badge & Digital Credential',
-        badgeColor: '#CD7F32',
+        physicalRewards: 'Premium SkillRock Diary & Planner',
+        digitalRewards: 'Verified Digital Badge',
+        badgeColor: '#F97316',
         orderIndex: 1,
         isActive: true,
       },
       {
-        tierCategory: 'The Navigator (Silver)',
+        monthLabel: 'MONTH 2',
+        tierCategory: 'The Trailblazer',
         pointsRequired: 1200,
-        physicalRewards: '₹500 e-voucher + SkillRock Tech Sling Bag',
-        digitalRewards: 'Silver Ambassador Badge & Verified Credential',
-        badgeColor: '#94A3B8',
+        physicalRewards: 'SkillRock Branded Stainless Steel Bottle',
+        digitalRewards: 'Verified Digital Badge',
+        badgeColor: '#6366F1',
         orderIndex: 2,
         isActive: true,
       },
       {
-        tierCategory: 'The Architect (Gold)',
+        monthLabel: 'MONTH 3',
+        tierCategory: 'The Changemaker',
         pointsRequired: 1800,
-        physicalRewards: '₹1000 e-voucher + Matt Black Insulated Bottle',
-        digitalRewards: 'Gold Ambassador Badge & Leadership Certificate',
-        badgeColor: '#F59E0B',
+        physicalRewards: 'Premium Face Wash & Personal Care Kit',
+        digitalRewards: 'Verified Digital Badge',
+        badgeColor: '#10B981',
         orderIndex: 3,
         isActive: true,
       },
       {
-        tierCategory: 'The Visionary (Sapphire)',
+        monthLabel: 'MONTH 4',
+        tierCategory: 'SkillRock Champ',
         pointsRequired: 2400,
-        physicalRewards: '₹1000 e-voucher + Exclusive SkillRock Varsity Jacket',
-        digitalRewards: 'Sapphire Ambassador Badge & Letter of Recommendation',
+        physicalRewards: 'Program Graduation Honors Kit',
+        digitalRewards: 'Verified 4-Month Digital Certificate + Elite Champ Badge',
         badgeColor: '#3B82F6',
         orderIndex: 4,
         isActive: true,
       },
     ];
     await RewardTier.insertMany(defaultTiers);
-    console.log('[Seed] Inserted 4 default reward tiers.');
+    console.log('[Seed] Inserted exact 4 default SkillRock reward tiers.');
   }
 
   // 4. Commission Settings
@@ -209,35 +214,14 @@ export const seedDatabase = async () => {
     console.log('[Seed] Initialized 20% default commission settings.');
   }
 
-  // 5. Backfill SRID and Default Password for existing Ambassadors if needed
-  const ambassadors = await Ambassador.find();
-  const defaultPasswordHash = await bcrypt.hash('SkillRock@2026', 12);
-  let updatedCount = 0;
+  // 5. Clean ambassador count - only real ambassadors approved or added by admin
+  const ambCount = await Ambassador.countDocuments();
+  console.log(`[Seed] Current approved ambassadors in roster: ${ambCount}`);
 
-  for (let i = 0; i < ambassadors.length; i++) {
-    const amb = ambassadors[i];
-    let dirty = false;
-
-    if (!amb.srid || amb.srid.trim() === '') {
-      amb.srid = `SR${1001 + i}`;
-      dirty = true;
-    }
-    if (!amb.passwordHash || amb.passwordHash.trim() === '') {
-      amb.passwordHash = defaultPasswordHash;
-      dirty = true;
-    }
-    if (dirty) {
-      await amb.save();
-      updatedCount++;
-    }
+  // 6. Recalculate ranks if ambassadors exist
+  if (ambCount > 0) {
+    await recalculateAllRanks();
   }
-
-  if (updatedCount > 0) {
-    console.log(`[Seed] Backfilled SRID and default password for ${updatedCount} ambassadors.`);
-  }
-
-  // 6. Recalculate ranks
-  await recalculateAllRanks();
   console.log('[Seed] Database initialization complete!');
 };
 
