@@ -72,14 +72,14 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
   };
 
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#2563EB] via-[#4F46E5] to-[#6366F1] text-white p-6 sm:p-8 lg:p-10 shadow-md">
+    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#2563EB] via-[#4F46E5] to-[#6366F1] text-white p-5 sm:p-8 lg:p-10 shadow-md">
       {/* Background ambient lighting */}
       <div className="absolute -right-10 -bottom-10 w-72 h-72 bg-white/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute left-1/3 -top-10 w-60 h-60 bg-indigo-400/10 rounded-full blur-2xl pointer-events-none" />
 
-      <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-5 sm:gap-6">
         {/* Left: Ambassador Info */}
-        <div className="space-y-2.5 max-w-xl">
+        <div className="space-y-2.5 max-w-xl w-full">
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-white/20 backdrop-blur-md text-white border border-white/20">
               <Zap className="w-3.5 h-3.5 text-amber-300" />
@@ -88,7 +88,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
           </div>
 
           {/* Ambassador Name */}
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight">
+          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight">
             {name}
           </h1>
 

@@ -5,6 +5,7 @@ import { Sidebar } from '../../components/Sidebar';
 import { HeroBanner } from '../../components/HeroBanner';
 import { TaskCard } from '../../components/TaskCard';
 import { TaskSubmissionModal } from '../../components/TaskSubmissionModal';
+import { AmbassadorHelpPill } from '../../components/AmbassadorHelpPill';
 import { ambassadorAPI, taskAPI } from '../../services/api';
 import { DashboardData, Task } from '../../types';
 import { CheckCircle2, Award, TrendingUp, MessageCircle, RefreshCw, AlertTriangle } from 'lucide-react';
@@ -58,12 +59,12 @@ export const Dashboard: React.FC = () => {
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans">
       <Header score={amb?.totalPoints} />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 sm:py-8 flex flex-col lg:flex-row gap-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 flex flex-col lg:flex-row gap-6">
         {/* Left Floating Sidebar */}
         <Sidebar />
 
         {/* Right Main Content */}
-        <div className="flex-1 space-y-6">
+        <div className="flex-1 min-w-0 space-y-5 sm:space-y-6">
           {/* Hero Banner matching Google Student Ambassador screen */}
           <HeroBanner
             name={amb?.name || 'Ambassador'}
@@ -179,16 +180,8 @@ export const Dashboard: React.FC = () => {
         </div>
       </main>
 
-      {/* Floating Ambassador Chatbot Help Pill (Matching Google Student Ambassador screen) */}
-      <a
-        href="https://chat.whatsapp.com/KGFvgXHtvsm4jGH3fcnOcj"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-lg hover:shadow-xl hover:scale-105 transition-all"
-      >
-        <MessageCircle className="w-4 h-4" />
-        <span>SkillRock Ambassador Help</span>
-      </a>
+      {/* Floating Ambassador Chatbot Help Pill */}
+      <AmbassadorHelpPill />
 
       {/* Task Submission / Detail Modal */}
       {selectedTask && (

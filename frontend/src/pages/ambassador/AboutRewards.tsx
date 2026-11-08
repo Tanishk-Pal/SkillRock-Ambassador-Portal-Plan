@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Header } from '../../components/Header';
 import { Sidebar } from '../../components/Sidebar';
+import { AmbassadorHelpPill } from '../../components/AmbassadorHelpPill';
 import { rewardsAPI } from '../../services/api';
 import { RewardTier } from '../../types';
 import { Award, Gift, Sparkles, CheckCircle2, FileText } from 'lucide-react';
@@ -82,10 +83,10 @@ export const AboutRewards: React.FC = () => {
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans">
       <Header />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 sm:py-8 flex flex-col lg:flex-row gap-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 flex flex-col lg:flex-row gap-6">
         <Sidebar />
 
-        <div className="flex-1 space-y-8">
+        <div className="flex-1 min-w-0 space-y-6 sm:space-y-8">
           {/* Main Hero Card for Ambassador Tier & Milestone Structure */}
           <div className="rounded-3xl bg-gradient-to-b from-[#2563EB] to-[#1D4ED8] p-6 sm:p-8 lg:p-10 text-white shadow-xl">
             {/* Header / Title */}
@@ -194,6 +195,9 @@ export const AboutRewards: React.FC = () => {
           </div>
         </div>
       </main>
+
+      {/* Floating Ambassador Chatbot Help Pill */}
+      <AmbassadorHelpPill />
     </div>
   );
 };

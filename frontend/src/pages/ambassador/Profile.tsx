@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Header } from '../../components/Header';
 import { Sidebar } from '../../components/Sidebar';
+import { AmbassadorHelpPill } from '../../components/AmbassadorHelpPill';
 import { useAuth } from '../../context/AuthContext';
 import { ambassadorAPI } from '../../services/api';
 import {
@@ -83,10 +84,10 @@ export const Profile: React.FC = () => {
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans">
       <Header />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 sm:py-8 flex flex-col lg:flex-row gap-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 flex flex-col lg:flex-row gap-6">
         <Sidebar />
 
-        <div className="flex-1 space-y-6">
+        <div className="flex-1 min-w-0 space-y-5 sm:space-y-6">
           {/* Profile Header */}
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-subtle flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
@@ -282,6 +283,9 @@ export const Profile: React.FC = () => {
           </div>
         </div>
       </main>
+
+      {/* Floating Ambassador Chatbot Help Pill */}
+      <AmbassadorHelpPill />
     </div>
   );
 };

@@ -2,13 +2,14 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
-  Home,
+  LayoutDashboard,
   CheckSquare,
   Info,
-  Award,
   BarChart3,
   TrendingUp,
+  Award,
   User,
+  Shield,
   LogOut,
   MessageCircle,
 } from 'lucide-react';
@@ -17,17 +18,18 @@ export const Sidebar: React.FC = () => {
   const { logout } = useAuth();
 
   const navItems = [
-    { name: 'Home', path: '/dashboard', icon: Home },
+    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Tasks', path: '/tasks', icon: CheckSquare },
     { name: 'About & Rewards', path: '/about', icon: Info },
-    { name: 'My Score', path: '/my-points', icon: Award },
     { name: 'Leaderboard', path: '/leaderboard', icon: BarChart3 },
     { name: 'My Sales', path: '/my-sales', icon: TrendingUp },
+    { name: 'My Points', path: '/my-points', icon: Award },
     { name: 'Profile', path: '/profile', icon: User },
+    { name: 'Admin', path: '/admin/dashboard', icon: Shield },
   ];
 
   return (
-    <aside className="w-full lg:w-60 flex-shrink-0">
+    <aside className="hidden lg:block w-60 flex-shrink-0">
       <div className="bg-white rounded-3xl p-3 border border-slate-200/80 shadow-sm sticky top-20 flex flex-col justify-between min-h-[500px]">
         {/* Navigation Links */}
         <nav className="space-y-1.5">

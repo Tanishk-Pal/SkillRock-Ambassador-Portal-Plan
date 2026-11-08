@@ -64,7 +64,7 @@ export const AdminLayout: React.FC = () => {
       <div className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 sm:py-8 flex flex-col lg:flex-row gap-6">
         {/* Admin Navigation Sidebar */}
         <aside className="w-full lg:w-64 flex-shrink-0">
-          <div className="bg-slate-800/90 rounded-3xl p-3 border border-slate-700 sticky top-20 shadow-xl space-y-1">
+          <div className="bg-slate-800/90 rounded-3xl p-2 sm:p-3 border border-slate-700 sticky top-16 lg:top-20 shadow-xl flex lg:flex-col gap-1 sm:gap-1.5 overflow-x-auto lg:overflow-visible scrollbar-none">
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -72,7 +72,7 @@ export const AdminLayout: React.FC = () => {
                   key={item.path}
                   to={item.path}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-semibold transition-all ${
+                    `flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-2xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap flex-shrink-0 ${
                       isActive
                         ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-bold'
                         : 'text-slate-400 hover:text-white hover:bg-slate-700/60'
@@ -85,7 +85,7 @@ export const AdminLayout: React.FC = () => {
               );
             })}
 
-            <div className="pt-4 mt-4 border-t border-slate-700/60 px-3">
+            <div className="hidden lg:block pt-4 mt-4 border-t border-slate-700/60 px-3">
               <span className="text-[11px] font-bold text-slate-400 block uppercase tracking-wider">
                 Console Mode
               </span>
