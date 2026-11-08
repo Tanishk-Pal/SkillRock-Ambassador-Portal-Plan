@@ -10,6 +10,7 @@ import {
   TrendingUp,
   User,
   LogOut,
+  MessageCircle,
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -51,8 +52,19 @@ export const Sidebar: React.FC = () => {
           })}
         </nav>
 
-        {/* Bottom: Logout */}
-        <div className="pt-4 mt-6 border-t border-slate-100">
+        {/* Bottom: WhatsApp Help & Logout */}
+        <div className="pt-4 mt-6 border-t border-slate-100 space-y-2">
+          <a
+            href="https://chat.whatsapp.com/KGFvgXHtvsm4jGH3fcnOcj"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 transition-all shadow-2xs"
+            title="Join SkillRock Ambassador WhatsApp Group"
+          >
+            <MessageCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+            <span>Ambassador Help Group</span>
+          </a>
+
           <button
             onClick={logout}
             className="w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl text-sm font-semibold text-slate-600 hover:text-red-600 hover:bg-red-50 transition-all"

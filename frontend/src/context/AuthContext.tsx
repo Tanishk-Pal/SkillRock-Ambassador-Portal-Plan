@@ -57,9 +57,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (res.data.success && res.data.user) {
         setUser(res.data.user);
         localStorage.setItem('user', JSON.stringify(res.data.user));
+      } else {
+        throw new Error('User not found');
       }
-    } catch (err) {
-      console.warn('Failed to refresh user credentials:', err);
+    } catch (err: any) {
+      console.warn('Session verification failed:', err.message);
+      // Clean up stale or invalid session to prevent unauthorized access
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      setToken(null);
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -70,14 +77,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [token]);
 
   const login = (newToken: string, newUser: User) => {
+    // Purge any existing session storage to avoid cross-user state pollution
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    sessionStorage.clear();
+
     // Normalize admin role
     const normalizedRole =
       newUser.role === 'admin' || newUser.role === 'superadmin' || (newUser.role as string) === 'super_admin'
         ? 'admin'
         : 'ambassador';
     const normalizedUser = { ...newUser, role: normalizedRole as 'admin' | 'ambassador' };
+
     localStorage.setItem('token', newToken);
     localStorage.setItem('user', JSON.stringify(normalizedUser));
+    localStorage.setItem('sessionTimestamp', String(Date.now()));
     setToken(newToken);
     setUser(normalizedUser);
   };

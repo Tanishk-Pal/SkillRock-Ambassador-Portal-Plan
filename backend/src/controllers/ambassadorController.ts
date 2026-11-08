@@ -4,6 +4,7 @@ import { Task } from '../models/Task';
 import { TaskSubmission } from '../models/TaskSubmission';
 import { PointsTransaction } from '../models/PointsTransaction';
 import { CourseSale } from '../models/CourseSale';
+import { syncSalesFromSkillrockPayments } from '../services/skillrockSyncService';
 
 export const getAmbassadorDashboard = async (req: Request, res: Response) => {
   try {
@@ -13,6 +14,11 @@ export const getAmbassadorDashboard = async (req: Request, res: Response) => {
     if (!ambassador) {
       return res.status(404).json({ success: false, message: 'Ambassador not found.' });
     }
+
+    // Sync any recent purchases attributed with SRID from main SkillRock database
+    await syncSalesFromSkillrockPayments().catch((err) =>
+      console.warn('[SyncSales Dashboard Warning]:', err.message)
+    );
 
     // 1. Fetch active tasks
     const activeTasks = await Task.find({ status: 'active' }).sort({ taskNumber: 1 });
@@ -111,6 +117,11 @@ export const getMySales = async (req: Request, res: Response) => {
     if (!srid) {
       return res.status(400).json({ success: false, message: 'No SRID associated with account.' });
     }
+
+    // Auto-sync any recent checkout purchases with this SRID
+    await syncSalesFromSkillrockPayments().catch((err) =>
+      console.warn('[SyncSales MySales Warning]:', err.message)
+    );
 
     const sales = await CourseSale.find({ srid }).sort({ saleTimestamp: -1 }).lean();
 

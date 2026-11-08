@@ -5,6 +5,7 @@ import path from 'path';
 import dotenv from 'dotenv';
 import { connectDB } from './config/database';
 import { seedDatabase } from './scripts/seed';
+import { syncSalesFromSkillrockPayments } from './services/skillrockSyncService';
 
 import authRoutes from './routes/authRoutes';
 import ambassadorRoutes from './routes/ambassadorRoutes';
@@ -98,6 +99,18 @@ const startServer = async () => {
   try {
     await connectDB();
     await seedDatabase();
+
+    // Auto-sync sales from SkillRock payments database
+    syncSalesFromSkillrockPayments().catch((e) =>
+      console.warn('[Initial Sales Sync Warning]:', e.message)
+    );
+
+    // Periodic sync every 60 seconds
+    setInterval(() => {
+      syncSalesFromSkillrockPayments().catch((e) =>
+        console.warn('[Background Sales Sync Warning]:', e.message)
+      );
+    }, 60000);
 
     app.listen(PORT, () => {
       console.log(`\n======================================================`);

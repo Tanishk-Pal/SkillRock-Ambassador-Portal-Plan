@@ -3,6 +3,7 @@ import { Header } from '../../components/Header';
 import { Sidebar } from '../../components/Sidebar';
 import { TaskCard } from '../../components/TaskCard';
 import { TaskSubmissionModal } from '../../components/TaskSubmissionModal';
+import { AmbassadorHelpPill } from '../../components/AmbassadorHelpPill';
 import { taskAPI } from '../../services/api';
 import { Task } from '../../types';
 import { Filter } from 'lucide-react';
@@ -88,6 +89,9 @@ export const Tasks: React.FC = () => {
           onSuccess={fetchTasks}
         />
       )}
+
+      {/* Floating Ambassador Chatbot Help Pill */}
+      <AmbassadorHelpPill />
     </div>
   );
 };

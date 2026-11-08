@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Ambassador } from '../models/Ambassador';
 import { processCourseSale } from '../services/salesService';
+import { syncSalesFromSkillrockPayments } from '../services/skillrockSyncService';
 
 export const validateSRID = async (req: Request, res: Response) => {
   try {
@@ -65,5 +66,18 @@ export const recordSaleWebhook = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Record sale error:', error);
     return res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+export const triggerSalesSync = async (_req: Request, res: Response) => {
+  try {
+    const result = await syncSalesFromSkillrockPayments();
+    return res.json({
+      success: true,
+      message: 'SkillRock platform sales synchronized successfully.',
+      ...result,
+    });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error.message });
   }
 };

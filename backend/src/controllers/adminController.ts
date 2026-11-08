@@ -10,9 +10,14 @@ import { RewardTier } from '../models/RewardTier';
 import { CommissionSetting } from '../models/CommissionSetting';
 import { generateNextSRID } from '../services/sridService';
 import { awardOrDeductPoints, recalculateAllRanks } from '../services/pointsService';
+import { syncSalesFromSkillrockPayments } from '../services/skillrockSyncService';
 
 export const getAdminDashboardStats = async (req: Request, res: Response) => {
   try {
+    await syncSalesFromSkillrockPayments().catch((err) =>
+      console.warn('[SyncSales Admin Stats Warning]:', err.message)
+    );
+
     const totalAmbassadors = await Ambassador.countDocuments();
     const activeAmbassadors = await Ambassador.countDocuments({ status: 'active' });
     const pendingApplicants = await Application.countDocuments({ convertedToAmbassador: { $ne: true } });
@@ -513,6 +518,10 @@ export const reviewSubmissionAdmin = async (req: Request, res: Response) => {
 
 export const getAllSalesAdmin = async (req: Request, res: Response) => {
   try {
+    await syncSalesFromSkillrockPayments().catch((err) =>
+      console.warn('[SyncSales Admin Sales Warning]:', err.message)
+    );
+
     const { status, srid } = req.query;
     const filter: any = {};
     if (status && status !== 'all') filter.paymentStatus = status;
