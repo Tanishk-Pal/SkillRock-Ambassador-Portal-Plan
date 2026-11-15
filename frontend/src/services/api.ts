@@ -10,7 +10,11 @@ export const getUploadUrl = (path: string) => {
   const baseUrl = import.meta.env.VITE_API_URL
     ? import.meta.env.VITE_API_URL.replace(/\/+$/, '')
     : '';
-  return `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  if (!cleanPath.startsWith('/uploads/')) {
+    return `${baseUrl}/uploads${cleanPath}`;
+  }
+  return `${baseUrl}${cleanPath}`;
 };
 
 const api = axios.create({
@@ -87,6 +91,8 @@ export const adminAPI = {
   getAmbassadors: (params?: any) => api.get('/admin/ambassadors', { params }),
   createAmbassador: (data: any) => api.post('/admin/ambassadors', data),
   updateAmbassador: (id: string, data: any) => api.put(`/admin/ambassadors/${id}`, data),
+  updateAmbassadorVideo: (id: string, data: { videoUrl?: string; videoType?: string }) =>
+    api.patch(`/admin/ambassadors/${id}/video`, data),
   deleteAmbassador: (id: string) => api.delete(`/admin/ambassadors/${id}`),
   adjustPoints: (data: any) => api.post('/admin/points/adjust', data),
   getApplicants: () => api.get('/admin/applicants'),

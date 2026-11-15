@@ -4,6 +4,7 @@ import {
   getAllAmbassadors,
   createAmbassador,
   updateAmbassador,
+  updateAmbassadorVideo,
   deleteAmbassador,
   adjustPoints,
   getApplicantsList,
@@ -35,6 +36,7 @@ router.get('/dashboard', getAdminDashboardStats);
 router.get('/ambassadors', getAllAmbassadors);
 router.post('/ambassadors', createAmbassador);
 router.put('/ambassadors/:id', updateAmbassador);
+router.patch('/ambassadors/:id/video', updateAmbassadorVideo);
 router.delete('/ambassadors/:id', deleteAmbassador);
 router.post('/points/adjust', adjustPoints);
 

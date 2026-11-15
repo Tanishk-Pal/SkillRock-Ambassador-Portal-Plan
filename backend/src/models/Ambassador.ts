@@ -15,6 +15,11 @@ export interface IAmbassador extends Document {
   city?: string;
   state?: string;
   avatar?: string;
+  videoType?: 'link' | 'upload';
+  videoUrl?: string;
+  videoFilePath?: string;
+  whyAmbassador?: string;
+  personalGoal?: string;
   totalPoints: number;
   currentRank: number;
   badgeTier: BadgeTier | null;
@@ -94,6 +99,26 @@ const ambassadorSchema = new Schema<IAmbassador, IAmbassadorModel>(
     avatar: {
       type: String,
       default: '',
+    },
+    videoType: {
+      type: String,
+      enum: ['link', 'upload'],
+    },
+    videoUrl: {
+      type: String,
+      trim: true,
+    },
+    videoFilePath: {
+      type: String,
+      trim: true,
+    },
+    whyAmbassador: {
+      type: String,
+      trim: true,
+    },
+    personalGoal: {
+      type: String,
+      trim: true,
     },
     totalPoints: {
       type: Number,

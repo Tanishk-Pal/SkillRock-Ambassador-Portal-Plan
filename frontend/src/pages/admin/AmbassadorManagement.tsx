@@ -14,7 +14,9 @@ import {
   ExternalLink,
   GraduationCap,
   AlertTriangle,
+  Video,
 } from 'lucide-react';
+import { VideoPreviewModal } from '../../components/VideoPreviewModal';
 
 export const AmbassadorManagement: React.FC = () => {
   const [ambassadors, setAmbassadors] = useState<any[]>([]);
@@ -25,6 +27,7 @@ export const AmbassadorManagement: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showPointsModal, setShowPointsModal] = useState<any | null>(null);
   const [showEditModal, setShowEditModal] = useState<any | null>(null);
+  const [selectedVideoAmb, setSelectedVideoAmb] = useState<any | null>(null);
 
   // Form states
   const [newName, setNewName] = useState('');
@@ -115,6 +118,7 @@ export const AmbassadorManagement: React.FC = () => {
         college: showEditModal.college,
         linkedin: showEditModal.linkedin,
         instagram: showEditModal.instagram,
+        videoUrl: showEditModal.videoUrl,
         srid: showEditModal.srid,
         status: showEditModal.status,
       });
@@ -195,6 +199,7 @@ export const AmbassadorManagement: React.FC = () => {
                 <th className="py-3.5 px-6">Ambassador & College</th>
                 <th className="py-3.5 px-6">SRID</th>
                 <th className="py-3.5 px-6">Public Socials</th>
+                <th className="py-3.5 px-6 text-center">Introduction Video</th>
                 <th className="py-3.5 px-6 text-center">Points</th>
                 <th className="py-3.5 px-6 text-center">Status</th>
                 <th className="py-3.5 px-6 text-right">Actions</th>
@@ -203,7 +208,7 @@ export const AmbassadorManagement: React.FC = () => {
             <tbody className="divide-y divide-slate-700 text-xs sm:text-sm text-slate-300">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-400">Loading ambassadors...</td>
+                  <td colSpan={7} className="py-8 text-center text-slate-400">Loading ambassadors...</td>
                 </tr>
               ) : ambassadors.length > 0 ? (
                 ambassadors.map((amb) => (
@@ -256,6 +261,30 @@ export const AmbassadorManagement: React.FC = () => {
                         )}
                       </div>
                     </td>
+                    <td className="py-4 px-6 text-center">
+                      {amb.videoUrl || amb.videoFilePath ? (
+                        <button
+                          onClick={() => setSelectedVideoAmb(amb)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 hover:border-indigo-400 transition-all shadow-sm"
+                          title="Watch Ambassador Introduction Video"
+                        >
+                          <Video className="w-3.5 h-3.5 text-indigo-400" />
+                          <span>Watch Intro</span>
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/30 text-indigo-200 uppercase font-mono">
+                            {amb.videoType === 'upload' || amb.videoFilePath ? 'MP4' : 'Drive'}
+                          </span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setSelectedVideoAmb(amb)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-semibold text-slate-400 hover:text-indigo-300 hover:bg-indigo-500/10 border border-slate-700/60 hover:border-indigo-500/30 transition-all"
+                          title="Add or link introduction video"
+                        >
+                          <Video className="w-3.5 h-3.5 text-slate-500" />
+                          <span>+ Add Video</span>
+                        </button>
+                      )}
+                    </td>
                     <td className="py-4 px-6 text-center font-black font-mono text-amber-400 text-base">
                       {amb.totalPoints || 0}
                     </td>
@@ -297,7 +326,7 @@ export const AmbassadorManagement: React.FC = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-400">No ambassadors registered yet.</td>
+                  <td colSpan={7} className="py-8 text-center text-slate-400">No ambassadors registered yet.</td>
                 </tr>
               )}
             </tbody>
@@ -522,6 +551,16 @@ export const AmbassadorManagement: React.FC = () => {
                 </div>
               </div>
               <div>
+                <label className="block text-slate-300 font-bold mb-1">Introduction Video URL (Google Drive)</label>
+                <input
+                  type="url"
+                  value={showEditModal.videoUrl || ''}
+                  onChange={(e) => setShowEditModal({ ...showEditModal, videoUrl: e.target.value })}
+                  placeholder="https://drive.google.com/file/d/.../view"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white outline-none"
+                />
+              </div>
+              <div>
                 <label className="block text-slate-300 font-bold mb-1">Account Status</label>
                 <select
                   value={showEditModal.status}
@@ -548,6 +587,30 @@ export const AmbassadorManagement: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Introduction Video Modal */}
+      {selectedVideoAmb && (
+        <VideoPreviewModal
+          isOpen={!!selectedVideoAmb}
+          onClose={() => setSelectedVideoAmb(null)}
+          candidateName={selectedVideoAmb.name}
+          candidateEmail={selectedVideoAmb.email}
+          candidateCollege={selectedVideoAmb.college}
+          srid={selectedVideoAmb.srid}
+          videoUrl={selectedVideoAmb.videoUrl}
+          videoFilePath={selectedVideoAmb.videoFilePath}
+          videoType={selectedVideoAmb.videoType}
+          whyAmbassador={selectedVideoAmb.whyAmbassador}
+          personalGoal={selectedVideoAmb.personalGoal}
+          ambassadorId={selectedVideoAmb._id}
+          onVideoUpdated={(newUrl) => {
+            setAmbassadors((prev) =>
+              prev.map((a) => (a._id === selectedVideoAmb._id ? { ...a, videoUrl: newUrl, videoType: 'link' } : a))
+            );
+            setSelectedVideoAmb((prev: any) => (prev ? { ...prev, videoUrl: newUrl, videoType: 'link' } : null));
+          }}
+        />
       )}
     </div>
   );

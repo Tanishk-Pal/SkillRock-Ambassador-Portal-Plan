@@ -91,7 +91,38 @@ export const getAllAmbassadors = async (req: Request, res: Response) => {
     }
 
     const ambassadors = await Ambassador.find(filter).sort({ totalPoints: -1, createdAt: 1 }).lean();
-    return res.json({ success: true, ambassadors });
+
+    // Enrich with introduction video & application data
+    const emails = ambassadors.map((a: any) => a.email.toLowerCase());
+    const srids = ambassadors.map((a: any) => a.srid);
+    const applications = await Application.find({
+      $or: [
+        { email: { $in: emails } },
+        { ambassadorSrid: { $in: srids } },
+      ],
+    }).lean();
+
+    const appMapBySrid = new Map<string, any>();
+    const appMapByEmail = new Map<string, any>();
+    applications.forEach((app: any) => {
+      if (app.ambassadorSrid) appMapBySrid.set(app.ambassadorSrid, app);
+      if (app.email) appMapByEmail.set(app.email.toLowerCase(), app);
+    });
+
+    const enrichedAmbassadors = ambassadors.map((amb: any) => {
+      const linkedApp = appMapBySrid.get(amb.srid) || appMapByEmail.get(amb.email.toLowerCase());
+      return {
+        ...amb,
+        videoType: amb.videoType || linkedApp?.videoType || (linkedApp?.videoUrl ? 'link' : linkedApp?.videoFilePath ? 'upload' : undefined),
+        videoUrl: amb.videoUrl || linkedApp?.videoUrl || undefined,
+        videoFilePath: amb.videoFilePath || linkedApp?.videoFilePath || undefined,
+        whyAmbassador: amb.whyAmbassador || linkedApp?.whyAmbassador || undefined,
+        personalGoal: amb.personalGoal || linkedApp?.personalGoal || undefined,
+        applicationId: amb.applicationId || linkedApp?._id || undefined,
+      };
+    });
+
+    return res.json({ success: true, ambassadors: enrichedAmbassadors });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error.message });
   }
@@ -156,7 +187,7 @@ export const createAmbassador = async (req: Request, res: Response) => {
 export const updateAmbassador = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, email, college, linkedin, instagram, city, state, phone, srid, status, password } = req.body;
+    const { name, email, college, linkedin, instagram, city, state, phone, srid, status, password, videoUrl, videoType, whyAmbassador, personalGoal } = req.body;
 
     const ambassador = await Ambassador.findById(id);
     if (!ambassador) {
@@ -172,6 +203,12 @@ export const updateAmbassador = async (req: Request, res: Response) => {
     if (state !== undefined) ambassador.state = state.trim();
     if (phone !== undefined) ambassador.phone = phone.trim();
     if (status) ambassador.status = status;
+    if (videoUrl !== undefined) {
+      ambassador.videoUrl = videoUrl.trim();
+      ambassador.videoType = videoType || 'link';
+    }
+    if (whyAmbassador !== undefined) ambassador.whyAmbassador = whyAmbassador.trim();
+    if (personalGoal !== undefined) ambassador.personalGoal = personalGoal.trim();
 
     if (srid && srid.trim().toUpperCase() !== ambassador.srid) {
       const conflict = await Ambassador.findOne({ srid: srid.trim().toUpperCase(), _id: { $ne: ambassador._id } });
@@ -186,7 +223,46 @@ export const updateAmbassador = async (req: Request, res: Response) => {
     }
 
     await ambassador.save();
+
+    // If videoUrl was changed, also update the linked application
+    if (videoUrl !== undefined && (ambassador.applicationId || ambassador.email)) {
+      await Application.updateOne(
+        { $or: [{ _id: ambassador.applicationId }, { email: ambassador.email }, { ambassadorSrid: ambassador.srid }] },
+        { $set: { videoUrl: videoUrl.trim(), videoType: videoType || 'link' } }
+      ).catch(() => {});
+    }
+
     return res.json({ success: true, message: 'Ambassador updated successfully.', ambassador });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const updateAmbassadorVideo = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { videoUrl, videoType } = req.body;
+
+    const ambassador = await Ambassador.findById(id);
+    if (!ambassador) {
+      return res.status(404).json({ success: false, message: 'Ambassador record not found.' });
+    }
+
+    ambassador.videoUrl = (videoUrl || '').trim();
+    ambassador.videoType = videoType || 'link';
+    await ambassador.save();
+
+    // Also sync with Application record
+    await Application.updateMany(
+      { $or: [{ _id: ambassador.applicationId }, { email: ambassador.email }, { ambassadorSrid: ambassador.srid }] },
+      { $set: { videoUrl: ambassador.videoUrl, videoType: ambassador.videoType } }
+    ).catch(() => {});
+
+    return res.json({
+      success: true,
+      message: 'Introduction video link saved successfully.',
+      ambassador,
+    });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error.message });
   }
@@ -287,6 +363,11 @@ export const convertApplicantToAmbassador = async (req: Request, res: Response) 
       city: applicant.city || 'India',
       state: applicant.state || '',
       phone: applicant.phone || '',
+      videoType: (applicant as any).videoType || (applicant.videoUrl ? 'link' : (applicant as any).videoFilePath ? 'upload' : undefined),
+      videoUrl: applicant.videoUrl || undefined,
+      videoFilePath: (applicant as any).videoFilePath || undefined,
+      whyAmbassador: (applicant as any).whyAmbassador || undefined,
+      personalGoal: (applicant as any).personalGoal || undefined,
       passwordHash,
       totalPoints: 0, // Ambassadors strictly start from 0 points
       badgeTier: 'The Explorer',

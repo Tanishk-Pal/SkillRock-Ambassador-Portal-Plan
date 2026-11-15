@@ -20,6 +20,7 @@ import {
   Image as ImageIcon,
 } from 'lucide-react';
 import { getTaskSubmissionType } from '../../components/TaskSubmissionModal';
+import { VideoPreviewModal } from '../../components/VideoPreviewModal';
 
 export const SubmissionsReview: React.FC = () => {
   const [submissions, setSubmissions] = useState<any[]>([]);
@@ -28,6 +29,13 @@ export const SubmissionsReview: React.FC = () => {
 
   // Review modal
   const [selectedSub, setSelectedSub] = useState<any | null>(null);
+  const [videoModalData, setVideoModalData] = useState<{
+    isOpen: boolean;
+    title: string;
+    url: string;
+    srid?: string;
+    college?: string;
+  } | null>(null);
   const [reviewAction, setReviewAction] = useState<'approve' | 'reject'>('approve');
   const [feedback, setFeedback] = useState('');
   const [customPoints, setCustomPoints] = useState<number | undefined>(undefined);
@@ -169,6 +177,24 @@ export const SubmissionsReview: React.FC = () => {
                           • {amb.college}
                         </span>
                       )}
+                      {(amb?.videoUrl || amb?.videoFilePath) && (
+                        <button
+                          onClick={() =>
+                            setVideoModalData({
+                              isOpen: true,
+                              title: `${amb?.name || 'Ambassador'} — Introduction Video`,
+                              url: amb?.videoUrl || '',
+                              srid: sub.srid || amb?.srid,
+                              college: amb?.college,
+                            })
+                          }
+                          className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/30 flex items-center gap-1 transition-colors ml-1"
+                          title="Watch Ambassador Introduction Video"
+                        >
+                          <Video className="w-3 h-3 text-indigo-400" />
+                          <span>Intro Video</span>
+                        </button>
+                      )}
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
@@ -291,11 +317,28 @@ export const SubmissionsReview: React.FC = () => {
 
                       {/* Google Drive Video URL (Optional) */}
                       {sData.googleDriveVideoUrl && (
-                        <div className="bg-slate-800/60 p-3 rounded-xl border border-slate-700 text-xs">
-                          <span className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5 mb-1">
-                            <Video className="w-3.5 h-3.5 text-indigo-400" />
-                            Google Drive Original Video File:
-                          </span>
+                        <div className="bg-slate-800/60 p-3 rounded-xl border border-slate-700 text-xs space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
+                              <Video className="w-3.5 h-3.5 text-indigo-400" />
+                              Google Drive Original Video File:
+                            </span>
+                            <button
+                              onClick={() =>
+                                setVideoModalData({
+                                  isOpen: true,
+                                  title: `${amb?.name || 'Ambassador'} — Reel Video`,
+                                  url: sData.googleDriveVideoUrl,
+                                  srid: sub.srid || amb?.srid,
+                                  college: amb?.college,
+                                })
+                              }
+                              className="px-2.5 py-1 rounded bg-indigo-600/30 text-indigo-300 hover:bg-indigo-600/50 flex items-center gap-1 text-[11px] font-semibold"
+                            >
+                              <Video className="w-3 h-3" />
+                              <span>Play Video</span>
+                            </button>
+                          </div>
                           <a
                             href={sData.googleDriveVideoUrl}
                             target="_blank"
@@ -424,15 +467,32 @@ export const SubmissionsReview: React.FC = () => {
                                 >
                                   {vUrl}
                                 </a>
-                                <a
-                                  href={vUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="px-2.5 py-1 rounded bg-indigo-600/30 text-indigo-300 hover:bg-indigo-600/50 flex items-center gap-1 text-[11px] font-semibold shrink-0"
-                                >
-                                  <span>Open Drive</span>
-                                  <ExternalLink className="w-3 h-3" />
-                                </a>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <button
+                                    onClick={() =>
+                                      setVideoModalData({
+                                        isOpen: true,
+                                        title: `${amb?.name || 'Ambassador'} — Campus Video #${idx + 1}`,
+                                        url: vUrl,
+                                        srid: sub.srid || amb?.srid,
+                                        college: amb?.college,
+                                      })
+                                    }
+                                    className="px-2.5 py-1 rounded bg-indigo-600/30 text-indigo-300 hover:bg-indigo-600/50 flex items-center gap-1 text-[11px] font-semibold shrink-0"
+                                  >
+                                    <Video className="w-3 h-3" />
+                                    <span>Play Video</span>
+                                  </button>
+                                  <a
+                                    href={vUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-2.5 py-1 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 flex items-center gap-1 text-[11px] font-semibold shrink-0"
+                                  >
+                                    <span>Open Drive</span>
+                                    <ExternalLink className="w-3 h-3" />
+                                  </a>
+                                </div>
                               </div>
                             ))}
                           </div>
@@ -713,6 +773,19 @@ export const SubmissionsReview: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Video Preview Modal for Submitted Videos & Intro Videos */}
+      {videoModalData && (
+        <VideoPreviewModal
+          isOpen={videoModalData.isOpen}
+          onClose={() => setVideoModalData(null)}
+          candidateName={videoModalData.title}
+          candidateCollege={videoModalData.college}
+          srid={videoModalData.srid}
+          videoUrl={videoModalData.url}
+          videoType="link"
+        />
       )}
     </div>
   );
