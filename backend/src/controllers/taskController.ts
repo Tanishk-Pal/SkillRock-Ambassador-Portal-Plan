@@ -108,11 +108,11 @@ export const getTaskDetail = async (req: Request, res: Response) => {
 };
 
 export const submitTask = async (req: Request, res: Response) => {
-  try {
-    const { taskId } = req.params;
-    const ambassadorId = req.user!.id;
-    const srid = req.user!.srid;
+  const { taskId } = req.params;
+  const ambassadorId = req.user?.id;
+  const srid = req.user?.srid;
 
+  try {
     const task = await Task.findById(taskId);
     if (!task) {
       return res.status(404).json({ success: false, message: 'Task not found.' });
@@ -123,14 +123,21 @@ export const submitTask = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, message: 'Deadline for this task has passed.' });
     }
 
-    // Check previous submissions
-    const existingApproved = await TaskSubmission.findOne({
+    // Check previous submissions (atomic uniqueness check)
+    const existingSubmission = await TaskSubmission.findOne({
       taskId,
       ambassadorId,
-      status: 'approved',
     });
-    if (existingApproved) {
-      return res.status(400).json({ success: false, message: 'This task has already been approved and points awarded.' });
+    if (existingSubmission) {
+      if (existingSubmission.status === 'approved') {
+        return res.status(400).json({ success: false, message: 'This task has already been approved and points awarded.' });
+      }
+      if (existingSubmission.status === 'submitted' || existingSubmission.status === 'under_review') {
+        return res.status(400).json({
+          success: false,
+          message: 'A submission for this task has already been submitted and is pending review.',
+        });
+      }
     }
 
     const taskType = getTaskSubmissionType(task);
@@ -328,23 +335,15 @@ export const submitTask = async (req: Request, res: Response) => {
       submissionData.videoUrl = body.videoUrl || '';
     }
 
-    const previousSubmissionsCount = await TaskSubmission.countDocuments({ taskId, ambassadorId });
-
-    // Check if there was a rejected submission to update, or create new
-    const existingRejected = await TaskSubmission.findOne({
-      taskId,
-      ambassadorId,
-      status: 'rejected',
-    }).sort({ createdAt: -1 });
-
+    // Check if there was a rejected submission to update (resubmission), or create new
     let finalSubmission;
-    if (existingRejected) {
-      existingRejected.submissionData = submissionData;
-      existingRejected.status = 'submitted';
-      existingRejected.submittedAt = new Date();
-      existingRejected.resubmissionCount += 1;
-      await existingRejected.save();
-      finalSubmission = existingRejected;
+    if (existingSubmission && existingSubmission.status === 'rejected') {
+      existingSubmission.submissionData = submissionData;
+      existingSubmission.status = 'submitted';
+      existingSubmission.submittedAt = new Date();
+      existingSubmission.resubmissionCount = (existingSubmission.resubmissionCount || 0) + 1;
+      await existingSubmission.save();
+      finalSubmission = existingSubmission;
     } else {
       finalSubmission = await TaskSubmission.create({
         taskId,
@@ -353,7 +352,7 @@ export const submitTask = async (req: Request, res: Response) => {
         submissionData,
         status: 'submitted',
         submittedAt: new Date(),
-        resubmissionCount: previousSubmissionsCount,
+        resubmissionCount: 0,
       });
     }
 
@@ -363,6 +362,15 @@ export const submitTask = async (req: Request, res: Response) => {
       submission: finalSubmission,
     });
   } catch (error: any) {
+    if (error.code === 11000) {
+      // E11000 duplicate key error from MongoDB unique index { taskId: 1, ambassadorId: 1 }
+      const existing = await TaskSubmission.findOne({ taskId, ambassadorId });
+      return res.status(400).json({
+        success: false,
+        message: 'A submission for this task already exists.',
+        submission: existing || undefined,
+      });
+    }
     console.error('Task submission error:', error);
     return res.status(500).json({ success: false, message: error.message });
   }

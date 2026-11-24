@@ -12,6 +12,7 @@ import { Application } from '../models/Application';
 import { awardOrDeductPoints } from '../services/pointsService';
 import { processCourseSale } from '../services/salesService';
 import { generateNextSRID } from '../services/sridService';
+import { submitTask } from '../controllers/taskController';
 
 dotenv.config();
 
@@ -191,10 +192,149 @@ async function runTests() {
       `Applicant 1-click converted to Ambassador with SRID ${convertedSrid}`
     );
 
+    // =========================================================================
+    // Duplicate Task Submission Prevention Tests
+    // =========================================================================
+    const mockReqRes = (taskId: string, user: any, body: any = {}) => {
+      let statusCode = 200;
+      let responseData: any = null;
+      const req = {
+        params: { taskId },
+        user,
+        body,
+        files: [],
+      } as any;
+      const res = {
+        status(code: number) {
+          statusCode = code;
+          return this;
+        },
+        json(data: any) {
+          responseData = data;
+          return this;
+        },
+      } as any;
+      return { req, res, getStatus: () => statusCode, getData: () => responseData };
+    };
+
+    const getValidBodyForTask = (t: any) => {
+      const type = t.submissionType;
+      if (type === 'reel_challenge') {
+        return {
+          instagramReelUrl: 'https://www.instagram.com/reel/test_reel_123/',
+          linkedinPostUrl: 'https://www.linkedin.com/posts/test_reel_123',
+        };
+      }
+      if (type === 'monthly_highlight') {
+        return {
+          linkedinPostUrl: 'https://www.linkedin.com/posts/test_highlight_123',
+        };
+      }
+      if (type === 'campus_growth') {
+        return {
+          studentsReached: 15,
+          registrationsGenerated: 8,
+          studentsLearningStarted: 6,
+          driveVideoLinks: ['https://drive.google.com/file/d/test1234/view'],
+        };
+      }
+      if (type === 'affiliate_sales') {
+        return {
+          coursesPromotedCount: 3,
+          salesGeneratedCount: 2,
+          courseNames: 'Applied Python Programming, Web Engineering',
+        };
+      }
+      return {
+        textResponse: 'Completed task submission proof',
+        links: ['https://drive.google.com/test_folder'],
+      };
+    };
+
+    // Test 12: Sequential Duplicate Submission Prevention
+    const dupTestTask = tasks[1] || tasks[0];
+    const validBodyTask1 = getValidBodyForTask(dupTestTask);
+
+    const call1 = mockReqRes(dupTestTask._id.toString(), { id: testAmb._id, srid: testAmb.srid }, validBodyTask1);
+    await submitTask(call1.req, call1.res);
+    assert(call1.getStatus() === 201, 'First task submission succeeds with 201 Created');
+
+    const call2 = mockReqRes(dupTestTask._id.toString(), { id: testAmb._id, srid: testAmb.srid }, validBodyTask1);
+    await submitTask(call2.req, call2.res);
+    assert(
+      call2.getStatus() === 400 && call2.getData()?.success === false,
+      'Consecutive duplicate submission is rejected with 400 Bad Request'
+    );
+
+    const dupCount1 = await TaskSubmission.countDocuments({
+      taskId: dupTestTask._id,
+      ambassadorId: testAmb._id,
+    });
+    assert(dupCount1 === 1, `Sequential duplicate attempt produced exactly 1 database record (found ${dupCount1})`);
+
+    // Test 13: Rapid Concurrent Task Submission Prevention
+    const concurrentTask = tasks[2] || tasks[0];
+    const validBodyTask2 = getValidBodyForTask(concurrentTask);
+
+    const concurrentCalls = Array.from({ length: 5 }, () => {
+      const mock = mockReqRes(
+        concurrentTask._id.toString(),
+        { id: testAmb._id, srid: testAmb.srid },
+        validBodyTask2
+      );
+      return submitTask(mock.req, mock.res).then(() => ({
+        status: mock.getStatus(),
+        data: mock.getData(),
+      }));
+    });
+
+    const concurrentResults = await Promise.all(concurrentCalls);
+    const createdCount = concurrentResults.filter((r) => r.status === 201).length;
+    const rejectedCount = concurrentResults.filter((r) => r.status === 400).length;
+
+    assert(
+      createdCount === 1,
+      `Exactly 1 of 5 concurrent submissions succeeded with 201 Created (found ${createdCount})`
+    );
+    assert(
+      rejectedCount === 4,
+      `Remaining 4 of 5 concurrent submissions rejected with 400 (found ${rejectedCount})`
+    );
+
+    const concurrentDbCount = await TaskSubmission.countDocuments({
+      taskId: concurrentTask._id,
+      ambassadorId: testAmb._id,
+    });
+    assert(
+      concurrentDbCount === 1,
+      `Concurrent submission attempts resulted in exactly 1 database record in tasksubmissions (found ${concurrentDbCount})`
+    );
+
+    // Test 14: MongoDB Unique Index Enforcement
+    let caughtMongoDuplicateError = false;
+    try {
+      await TaskSubmission.create({
+        taskId: concurrentTask._id,
+        ambassadorId: testAmb._id,
+        srid: testAmb.srid,
+        submissionData: validBodyTask2,
+        status: 'submitted',
+      });
+    } catch (err: any) {
+      if (err.code === 11000) {
+        caughtMongoDuplicateError = true;
+      }
+    }
+    assert(
+      caughtMongoDuplicateError,
+      'Direct duplicate insertion triggers MongoDB E11000 uniqueness constraint violation'
+    );
+
     // Clean up test records
     await Ambassador.findByIdAndDelete(testAmb._id);
     await Ambassador.findByIdAndDelete(convertedAmb._id);
     await TaskSubmission.findByIdAndDelete(submission._id);
+    await TaskSubmission.deleteMany({ ambassadorId: testAmb._id });
     await CourseSale.findByIdAndDelete(saleResult.sale._id);
     await PointsTransaction.deleteMany({ ambassadorId: testAmb._id });
     await Application.findByIdAndDelete(sampleApplicant._id);

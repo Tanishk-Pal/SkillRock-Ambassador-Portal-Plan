@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   X,
   Upload,
@@ -7,6 +7,7 @@ import {
   AlertCircle,
   FileText,
   Send,
+  Loader2,
   Instagram,
   Linkedin,
   Video,
@@ -117,6 +118,7 @@ export const TaskSubmissionModal: React.FC<TaskSubmissionModalProps> = ({
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
 
   const [loading, setLoading] = useState(false);
+  const isSubmittingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
@@ -175,6 +177,8 @@ export const TaskSubmissionModal: React.FC<TaskSubmissionModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading || isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     setError(null);
     setLoading(true);
 
@@ -286,6 +290,7 @@ export const TaskSubmissionModal: React.FC<TaskSubmissionModalProps> = ({
       setError(err.message || err.response?.data?.message || 'Failed to submit task proof. Please check your inputs.');
     } finally {
       setLoading(false);
+      isSubmittingRef.current = false;
     }
   };
 
@@ -295,7 +300,8 @@ export const TaskSubmissionModal: React.FC<TaskSubmissionModalProps> = ({
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute right-5 top-5 p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+          disabled={loading}
+          className="absolute right-5 top-5 p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           title="Close modal"
         >
           <X className="w-5 h-5" />
@@ -834,17 +840,21 @@ export const TaskSubmissionModal: React.FC<TaskSubmissionModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
+                disabled={loading}
+                className="px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl text-xs sm:text-sm font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md shadow-indigo-500/20 disabled:opacity-50 transition-all hover:scale-[1.01]"
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl text-xs sm:text-sm font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none transition-all hover:scale-[1.01]"
               >
                 {loading ? (
-                  <span>Submitting...</span>
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Submitting...</span>
+                  </>
                 ) : (
                   <>
                     <Send className="w-4 h-4" />

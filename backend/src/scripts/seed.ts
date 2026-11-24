@@ -45,9 +45,7 @@ export const seedDatabase = async () => {
   }
 
   // 2. Initial 4 Dynamic Tasks
-  const taskCount = await Task.countDocuments();
-  if (taskCount === 0) {
-    const initialTasks = [
+  const initialTasks = [
       {
         taskNumber: 1,
         title: 'Fest Stall Challenge: Build Night With Nano Banana',
@@ -154,8 +152,12 @@ export const seedDatabase = async () => {
       },
     ];
 
-    await Task.insertMany(initialTasks);
-    console.log('[Seed] Inserted 4 initial dynamic task slots.');
+  for (const t of initialTasks) {
+    const existing = await Task.findOne({ taskNumber: t.taskNumber });
+    if (!existing) {
+      await Task.create(t);
+      console.log(`[Seed] Inserted dynamic task slot #${t.taskNumber}: ${t.title}`);
+    }
   }
 
   // 3. Exact 4-Month Reward Tiers matching SkillRock Milestone Structure

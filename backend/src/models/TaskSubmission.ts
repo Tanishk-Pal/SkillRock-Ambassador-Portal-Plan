@@ -99,6 +99,7 @@ const taskSubmissionSchema = new Schema<ITaskSubmission>(
   { timestamps: true }
 );
 
+taskSubmissionSchema.index({ taskId: 1, ambassadorId: 1 }, { unique: true });
 taskSubmissionSchema.index({ taskId: 1, ambassadorId: 1, createdAt: -1 });
 
 export const TaskSubmission = mongoose.model<ITaskSubmission>('TaskSubmission', taskSubmissionSchema);
