@@ -335,15 +335,28 @@ export const submitTask = async (req: Request, res: Response) => {
       submissionData.videoUrl = body.videoUrl || '';
     }
 
-    // Check if there was a rejected submission to update (resubmission), or create new
+    // Check if there was a rejected submission to update atomically (resubmission), or create new
     let finalSubmission;
     if (existingSubmission && existingSubmission.status === 'rejected') {
-      existingSubmission.submissionData = submissionData;
-      existingSubmission.status = 'submitted';
-      existingSubmission.submittedAt = new Date();
-      existingSubmission.resubmissionCount = (existingSubmission.resubmissionCount || 0) + 1;
-      await existingSubmission.save();
-      finalSubmission = existingSubmission;
+      const updatedSubmission = await TaskSubmission.findOneAndUpdate(
+        { _id: existingSubmission._id, status: 'rejected' },
+        {
+          $set: {
+            submissionData,
+            status: 'submitted',
+            submittedAt: new Date(),
+          },
+          $inc: { resubmissionCount: 1 },
+        },
+        { new: true }
+      );
+      if (!updatedSubmission) {
+        return res.status(400).json({
+          success: false,
+          message: 'A submission for this task has already been submitted and is pending review.',
+        });
+      }
+      finalSubmission = updatedSubmission;
     } else {
       finalSubmission = await TaskSubmission.create({
         taskId,

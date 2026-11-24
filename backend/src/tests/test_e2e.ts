@@ -414,6 +414,42 @@ async function runTests() {
       `Resubmitted task maintains exactly 1 database record in tasksubmissions (found ${resubmitDbCount})`
     );
 
+    // Test 17: Concurrent Rejected Task Resubmission Atomicity (Multi-instance race protection)
+    await TaskSubmission.updateOne(
+      { taskId: dupTestTask._id, ambassadorId: testAmb._id },
+      { $set: { status: 'rejected', adminFeedback: 'Second revision requested.' } }
+    );
+
+    const concurrentResubmitCalls = Array.from({ length: 5 }, () => {
+      const mock = mockReqRes(
+        dupTestTask._id.toString(),
+        { id: testAmb._id, srid: testAmb.srid },
+        validBodyTask1
+      );
+      return submitTask(mock.req, mock.res).then(() => ({
+        status: mock.getStatus(),
+        data: mock.getData(),
+      }));
+    });
+
+    const concurrentResubmitResults = await Promise.all(concurrentResubmitCalls);
+    const resubmitCreatedCount = concurrentResubmitResults.filter((r) => r.status === 201).length;
+    const resubmitRejectedCount = concurrentResubmitResults.filter((r) => r.status === 400).length;
+
+    assert(
+      resubmitCreatedCount === 1 && resubmitRejectedCount === 4,
+      `5-way concurrent rejected resubmission allows exactly 1 (201) and rejects 4 (400) (got ${resubmitCreatedCount}x201, ${resubmitRejectedCount}x400)`
+    );
+
+    const concurrentResubmitDoc = await TaskSubmission.findOne({
+      taskId: dupTestTask._id,
+      ambassadorId: testAmb._id,
+    });
+    assert(
+      !!concurrentResubmitDoc && concurrentResubmitDoc.resubmissionCount === 2,
+      `Concurrent rejected resubmission increments resubmissionCount atomically once (expected 2, found ${concurrentResubmitDoc?.resubmissionCount})`
+    );
+
     // Clean up test records
     await Ambassador.findByIdAndDelete(testAmb._id);
     await Ambassador.findByIdAndDelete(convertedAmb._id);

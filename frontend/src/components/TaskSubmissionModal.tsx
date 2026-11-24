@@ -126,8 +126,17 @@ export const TaskSubmissionModal: React.FC<TaskSubmissionModalProps> = ({
 
   const [loading, setLoading] = useState(false);
   const isSubmittingRef = useRef(false);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+      }
+    };
+  }, []);
 
   // Fetch verified sales if affiliate challenge
   useEffect(() => {
@@ -289,11 +298,18 @@ export const TaskSubmissionModal: React.FC<TaskSubmissionModalProps> = ({
       if (res.data.success) {
         setSuccessMsg('Your task-specific submission has been recorded! Points will be awarded upon Admin verification.');
         setLoading(false);
+        onSuccess();
         // Keep isSubmittingRef.current = true to prevent double submission during the timeout cooldown
-        setTimeout(() => {
-          onSuccess();
+        if (closeTimerRef.current) {
+          clearTimeout(closeTimerRef.current);
+        }
+        closeTimerRef.current = setTimeout(() => {
           onClose();
         }, 1500);
+      } else {
+        setError(res.data.message || 'Failed to submit task proof. Please check your inputs.');
+        isSubmittingRef.current = false;
+        setLoading(false);
       }
     } catch (err: any) {
       setError(err.message || err.response?.data?.message || 'Failed to submit task proof. Please check your inputs.');
