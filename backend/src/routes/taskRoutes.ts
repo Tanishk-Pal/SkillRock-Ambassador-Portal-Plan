@@ -27,6 +27,24 @@ export const preventDuplicateSubmission = async (req: Request, res: Response, ne
     });
   }
 
+  // Acquire lock IMMEDIATELY and synchronously before any async I/O
+  inFlightSubmissions.add(lockKey);
+
+  let released = false;
+  const releaseLock = () => {
+    if (!released) {
+      released = true;
+      inFlightSubmissions.delete(lockKey);
+      res.removeListener('finish', releaseLock);
+      res.removeListener('close', releaseLock);
+      clearTimeout(safetyTimer);
+    }
+  };
+
+  const safetyTimer = setTimeout(releaseLock, 60000);
+  res.on('finish', releaseLock);
+  res.on('close', releaseLock);
+
   // Atomic check 2: Pre-upload database check to prevent duplicate records
   try {
     const existingSubmission = await TaskSubmission.findOne({
@@ -36,12 +54,14 @@ export const preventDuplicateSubmission = async (req: Request, res: Response, ne
 
     if (existingSubmission) {
       if (existingSubmission.status === 'approved') {
+        releaseLock();
         return res.status(400).json({
           success: false,
           message: 'This task has already been approved and points awarded.',
         });
       }
       if (existingSubmission.status === 'submitted' || existingSubmission.status === 'under_review') {
+        releaseLock();
         return res.status(400).json({
           success: false,
           message: 'A submission for this task has already been submitted and is pending review.',
@@ -50,20 +70,9 @@ export const preventDuplicateSubmission = async (req: Request, res: Response, ne
       // If rejected, ambassador is permitted to resubmit
     }
   } catch (err: any) {
+    releaseLock();
     return res.status(500).json({ success: false, message: err.message });
   }
-
-  // Acquire lock for the duration of upload & processing
-  inFlightSubmissions.add(lockKey);
-
-  const cleanup = () => {
-    inFlightSubmissions.delete(lockKey);
-    res.removeListener('finish', cleanup);
-    res.removeListener('close', cleanup);
-  };
-
-  res.on('finish', cleanup);
-  res.on('close', cleanup);
 
   next();
 };

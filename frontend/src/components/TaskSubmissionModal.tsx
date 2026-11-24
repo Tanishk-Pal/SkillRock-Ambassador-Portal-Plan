@@ -8,6 +8,7 @@ import {
   FileText,
   Send,
   Loader2,
+  Clock,
   Instagram,
   Linkedin,
   Video,
@@ -68,7 +69,13 @@ export const TaskSubmissionModal: React.FC<TaskSubmissionModalProps> = ({
   const taskType = getTaskSubmissionType(task);
   const submission = task.submission;
   const prevData: TaskSubmissionData = submission?.submissionData || {};
-  const isApproved = task.userStatus === 'Approved';
+  const isApproved = task.userStatus === 'Approved' || submission?.status === 'approved';
+  const isPending =
+    task.userStatus === 'Submitted' ||
+    task.userStatus === 'Under Review' ||
+    submission?.status === 'submitted' ||
+    submission?.status === 'under_review';
+  const isLocked = isApproved || isPending;
 
   // --- Reel Challenge Form State ---
   const [instagramReelUrl, setInstagramReelUrl] = useState(prevData.instagramReelUrl || '');
@@ -177,7 +184,7 @@ export const TaskSubmissionModal: React.FC<TaskSubmissionModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loading || isSubmittingRef.current) return;
+    if (loading || isSubmittingRef.current || !!successMsg || isLocked) return;
     isSubmittingRef.current = true;
     setError(null);
     setLoading(true);
@@ -281,6 +288,8 @@ export const TaskSubmissionModal: React.FC<TaskSubmissionModalProps> = ({
       const res = await taskAPI.submitTask(task._id, formData);
       if (res.data.success) {
         setSuccessMsg('Your task-specific submission has been recorded! Points will be awarded upon Admin verification.');
+        setLoading(false);
+        // Keep isSubmittingRef.current = true to prevent double submission during the timeout cooldown
         setTimeout(() => {
           onSuccess();
           onClose();
@@ -288,9 +297,8 @@ export const TaskSubmissionModal: React.FC<TaskSubmissionModalProps> = ({
       }
     } catch (err: any) {
       setError(err.message || err.response?.data?.message || 'Failed to submit task proof. Please check your inputs.');
-    } finally {
-      setLoading(false);
       isSubmittingRef.current = false;
+      setLoading(false);
     }
   };
 
@@ -350,8 +358,25 @@ export const TaskSubmissionModal: React.FC<TaskSubmissionModalProps> = ({
           </div>
         )}
 
+        {/* Under Review Status Notice */}
+        {isPending && !isApproved && (
+          <div className="mb-6 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex items-start gap-3 shadow-2xs">
+            <Clock className="w-5 h-5 flex-shrink-0 text-amber-600 mt-0.5" />
+            <div className="text-xs sm:text-sm">
+              <p className="font-extrabold text-amber-800">Submission Under Review</p>
+              <p className="mt-0.5 text-amber-700">
+                Your submission for this challenge has been received and is currently being evaluated by the admin team.
+                {submission?.submittedAt && ` Submitted on ${new Date(submission.submittedAt).toLocaleDateString()}.`}
+              </p>
+              <p className="mt-1 text-[11px] text-amber-600 font-semibold">
+                You will be notified once points are verified or if revisions are needed.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Submission Form */}
-        {!isApproved ? (
+        {!isLocked ? (
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
               <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs sm:text-sm font-semibold flex items-center gap-2">
@@ -847,13 +872,18 @@ export const TaskSubmissionModal: React.FC<TaskSubmissionModalProps> = ({
               </button>
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !!successMsg || isLocked}
                 className="inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl text-xs sm:text-sm font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none transition-all hover:scale-[1.01]"
               >
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
                     <span>Submitting...</span>
+                  </>
+                ) : successMsg ? (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Submitted!</span>
                   </>
                 ) : (
                   <>
