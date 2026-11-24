@@ -13,6 +13,7 @@ import { awardOrDeductPoints } from '../services/pointsService';
 import { processCourseSale } from '../services/salesService';
 import { generateNextSRID } from '../services/sridService';
 import { submitTask } from '../controllers/taskController';
+import { preventDuplicateSubmission } from '../routes/taskRoutes';
 
 dotenv.config();
 
@@ -198,6 +199,7 @@ async function runTests() {
     const mockReqRes = (taskId: string, user: any, body: any = {}) => {
       let statusCode = 200;
       let responseData: any = null;
+      const listeners: Record<string, Function[]> = {};
       const req = {
         params: { taskId },
         user,
@@ -205,16 +207,39 @@ async function runTests() {
         files: [],
       } as any;
       const res = {
+        on(event: string, fn: Function) {
+          listeners[event] = listeners[event] || [];
+          listeners[event].push(fn);
+          return this;
+        },
+        removeListener(event: string, fn: Function) {
+          if (listeners[event]) {
+            listeners[event] = listeners[event].filter((f) => f !== fn);
+          }
+          return this;
+        },
+        emit(event: string) {
+          if (listeners[event]) {
+            [...listeners[event]].forEach((fn) => fn());
+          }
+        },
         status(code: number) {
           statusCode = code;
           return this;
         },
         json(data: any) {
           responseData = data;
+          this.emit('finish');
           return this;
         },
       } as any;
-      return { req, res, getStatus: () => statusCode, getData: () => responseData };
+      return {
+        req,
+        res,
+        getStatus: () => statusCode,
+        getData: () => responseData,
+        emitFinish: () => res.emit('finish'),
+      };
     };
 
     const getValidBodyForTask = (t: any) => {
@@ -328,6 +353,65 @@ async function runTests() {
     assert(
       caughtMongoDuplicateError,
       'Direct duplicate insertion triggers MongoDB E11000 uniqueness constraint violation'
+    );
+
+    // Test 15: preventDuplicateSubmission In-Flight Mutex & Pre-Upload Interception
+    const middlewareTask = tasks[3] || tasks[0];
+    const mCall1 = mockReqRes(middlewareTask._id.toString(), { id: testAmb._id, srid: testAmb.srid });
+    let mNext1Called = false;
+    await preventDuplicateSubmission(mCall1.req, mCall1.res, () => {
+      mNext1Called = true;
+    });
+    assert(mNext1Called, 'First request cleanly passes preventDuplicateSubmission middleware to next()');
+
+    // While mCall1 is in flight (has not finished/closed), concurrent mCall2 must be blocked with 409 Conflict
+    const mCall2 = mockReqRes(middlewareTask._id.toString(), { id: testAmb._id, srid: testAmb.srid });
+    let mNext2Called = false;
+    await preventDuplicateSubmission(mCall2.req, mCall2.res, () => {
+      mNext2Called = true;
+    });
+    assert(
+      !mNext2Called && mCall2.getStatus() === 409,
+      'Concurrent in-flight duplicate submission is rejected by middleware with 409 Conflict'
+    );
+
+    // Release mCall1 in-flight lock via finish
+    mCall1.emitFinish();
+
+    // Now test pre-upload check for already submitted task (concurrentTask already exists in db)
+    const mCallPreUpload = mockReqRes(concurrentTask._id.toString(), { id: testAmb._id, srid: testAmb.srid });
+    let mNextPreUploadCalled = false;
+    await preventDuplicateSubmission(mCallPreUpload.req, mCallPreUpload.res, () => {
+      mNextPreUploadCalled = true;
+    });
+    assert(
+      !mNextPreUploadCalled && mCallPreUpload.getStatus() === 400,
+      'Pre-upload middleware rejects duplicate submission with 400 before Multer disk writes'
+    );
+
+    // Test 16: Resubmission flow on Rejected Task preserves uniqueness
+    // Mark dupTestTask submission as rejected
+    await TaskSubmission.updateOne(
+      { taskId: dupTestTask._id, ambassadorId: testAmb._id },
+      { $set: { status: 'rejected', adminFeedback: 'Please provide updated proof.' } }
+    );
+
+    const resubmitCall = mockReqRes(dupTestTask._id.toString(), { id: testAmb._id, srid: testAmb.srid }, validBodyTask1);
+    await submitTask(resubmitCall.req, resubmitCall.res);
+    assert(
+      resubmitCall.getStatus() === 201 &&
+        resubmitCall.getData()?.submission.resubmissionCount === 1 &&
+        resubmitCall.getData()?.submission.status === 'submitted',
+      'Rejected task resubmission succeeds with 201, increments resubmissionCount to 1, and updates existing document'
+    );
+
+    const resubmitDbCount = await TaskSubmission.countDocuments({
+      taskId: dupTestTask._id,
+      ambassadorId: testAmb._id,
+    });
+    assert(
+      resubmitDbCount === 1,
+      `Resubmitted task maintains exactly 1 database record in tasksubmissions (found ${resubmitDbCount})`
     );
 
     // Clean up test records
